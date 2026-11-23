@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "om.luiscoronel.jervy"
+    namespace = "com.luiscoronel.jervy"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "om.luiscoronel.jervy"
-        minSdk = 24
-        targetSdk = 37
+        applicationId = "com.luiscoronel.jervy"
+        minSdk = 31
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -33,6 +33,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    lint {
+        // targetSdk 36 con compileSdk 37 es intencional: ver "Decisiones tomadas" en CLAUDE.md.
+        // Revisar esta exclusión al probar en Android 17 (cuando se suba targetSdk a 37).
+        disable += "OldTargetApi"
     }
 }
 

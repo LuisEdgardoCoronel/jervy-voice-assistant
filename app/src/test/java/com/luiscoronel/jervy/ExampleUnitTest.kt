@@ -1,4 +1,4 @@
-package om.luiscoronel.jervy
+package com.luiscoronel.jervy
 
 import org.junit.Test
 

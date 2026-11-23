@@ -1,4 +1,4 @@
-package om.luiscoronel.jervy.ui.theme
+package com.luiscoronel.jervy.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

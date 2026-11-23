@@ -70,7 +70,7 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 ### Stack y restricciones técnicas
 - **Lenguaje:** Kotlin. **UI:** Jetpack Compose (mínima: activar/pausar, estado, onboarding, logs de debug).
 - **Asincronía:** Coroutines + Flow / StateFlow.
-- **minSdk 31** (Android 12) — **targetSdk 36** (Android 16).
+- **minSdk 31** (Android 12) — **targetSdk 36** (Android 16) — **compileSdk 37**.
 - **Build:** Gradle Kotlin DSL + version catalog (`libs.versions.toml`).
 - **Inyección de dependencias:** manual (un `AppContainer` simple). Sin Hilt en v1.
 - **Voz a texto:** `SpeechRecognizer` de Android (es-AR, fallback es-ES).
@@ -132,6 +132,7 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-23 — Kotlin nativo, no React Native. — Services, notificaciones y audio son nativos; con RN igual habría que escribirlos en Kotlin.
 - 2026-11-23 — Sin AccessibilityService en v1. — Frágil y difícil de distribuir; se priorizan APIs oficiales.
 - 2026-11-23 — Parser por reglas en v1, LLM en v2. — Más simple, offline y testeable; el LLM entra detrás de la misma interfaz.
+- 2026-11-23 — targetSdk 36 con compileSdk 37. — Se compila contra las APIs nuevas sin adoptar todavía los cambios de comportamiento de Android 17, que no están probados. La regla de lint `OldTargetApi` queda desactivada; revisarla al probar en Android 17.
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
