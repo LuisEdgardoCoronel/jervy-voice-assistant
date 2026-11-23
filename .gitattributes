@@ -1,0 +1,11 @@
+# Normalizar fines de línea: todo en LF salvo scripts de Windows.
+* text=auto eol=lf
+
+# Scripts
+*.bat text eol=crlf
+gradlew text eol=lf
+
+# Binarios
+*.jar binary
+*.webp binary
+*.png binary
