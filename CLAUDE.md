@@ -86,7 +86,7 @@ Pipeline con una interfaz por etapa:
 WakeWordDetector → SpeechToText → CommandParser → Action → Speaker
 ```
 
-- `core/` — **Kotlin puro, sin imports de Android**: modelos de comando (`Command` sealed class), `CommandParser`, máquina de estados, normalización de texto. Totalmente testeable con JUnit y preparado para Kotlin Multiplatform a futuro.
+- `:core` — **módulo Gradle Kotlin/JVM puro (sin dependencia del SDK de Android)**: modelos de comando (`Command` sealed class), `CommandParser`, máquina de estados, normalización de texto. Totalmente testeable con JUnit y preparado para Kotlin Multiplatform a futuro. El resto (`audio/`, `actions/`, `system/`, `ui/`) son paquetes dentro del módulo `:app`, que depende de `:core`.
 - `audio/` — implementaciones de wake word, STT, TTS, audio focus, routing Bluetooth.
 - `actions/` — un archivo por comando (`ReadNotificationsAction`, `SendWhatsAppAction`, `CallContactAction`, `PlayMusicAction`, `MediaControlAction`, `StopAction`, `PauseAction`). Sumar un comando no toca el núcleo.
 - `system/` — `JervyService` (foreground service), `JervyNotificationListener`, repositorio de contactos, permisos.
@@ -116,7 +116,7 @@ adb logcat -s Jervy            # ver logs
 ```
 
 ## Roadmap v1 (cada etapa = 1 a 3 pasos; cerrar con prueba en la calle)
-0. **Scaffolding:** el proyecto base lo crea el usuario con el asistente de Android Studio (Empty Activity, Compose, Kotlin DSL, minSdk 31). Claude Code completa: paquetes de la Arquitectura vacíos, ktlint configurado, revisión del `.gitignore` (`local.properties` y `.idea/` fuera del repo), targetSdk 36. Criterio de éxito: `./gradlew assembleDebug`, `./gradlew test` y `./gradlew installDebug` funcionan desde la terminal y la app abre en el Samsung.
+0. **Scaffolding:** el proyecto base lo crea el usuario con el asistente de Android Studio (Empty Activity, Compose, Kotlin DSL, minSdk 31). Claude Code completa: módulo `:core` y paquetes de la Arquitectura vacíos, ktlint configurado, revisión del `.gitignore` (`local.properties` y `.idea/` fuera del repo), targetSdk 36. Criterio de éxito: `./gradlew assembleDebug`, `./gradlew test` y `./gradlew installDebug` funcionan desde la terminal y la app abre en el Samsung.
 1. **Spike de riesgo:** foreground service + notificación + palabra clave + "hola" por TTS, sobreviviendo 1 h con música y Bluetooth en ambos teléfonos. Decidir motor de wake word. (R1, R2, NF2, NF3)
 2. **Pipeline completo + máquina de estados + parser v1** con "pausa" y "es todo por hoy". (R3, R9, NF6)
 3. **Onboarding de permisos.** (R10)
@@ -133,6 +133,7 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-23 — Sin AccessibilityService en v1. — Frágil y difícil de distribuir; se priorizan APIs oficiales.
 - 2026-11-23 — Parser por reglas en v1, LLM en v2. — Más simple, offline y testeable; el LLM entra detrás de la misma interfaz.
 - 2026-11-23 — targetSdk 36 con compileSdk 37. — Se compila contra las APIs nuevas sin adoptar todavía los cambios de comportamiento de Android 17, que no están probados. La regla de lint `OldTargetApi` queda desactivada; revisarla al probar en Android 17.
+- 2026-11-23 — core/ como módulo Gradle JVM puro (`:core`), no como paquete de app. — El compilador impide imports de Android y deja el camino listo para KMP.
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
@@ -142,4 +143,6 @@ adb logcat -s Jervy            # ver logs
 - "Jervy, ¿qué está sonando?" y control de volumen.
 - Registrarse en Android developer verification antes de que llegue a Argentina (expansión global prevista para 2027) para poder seguir compartiendo el APK.
 - Explorar el caso repartidores/conductores (validar con usuarios reales; no automatizar apps de terceros por sus términos de uso).
-- iOS reducido (Siri Shortcuts / App Intents) reutilizando `core/` con Kotlin Multiplatform.
+- iOS reducido (Siri Shortcuts / App Intents) reutilizando `:core` con Kotlin Multiplatform.
+- Limpiar warnings de lint heredados del template: `UnusedResources` (7) y `RedundantLabel` (1).
+- Paso 0.4: definir la versión de Java en un solo lugar para `:app` y `:core` (hoy cada módulo fija Java 11 por separado).
