@@ -1,6 +1,11 @@
 // Módulo Kotlin/JVM puro: sin dependencia del SDK de Android (ver Arquitectura en CLAUDE.md).
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktlint)
+}
+
+ktlint {
+    version.set(libs.versions.ktlint.get())
 }
 
 java {

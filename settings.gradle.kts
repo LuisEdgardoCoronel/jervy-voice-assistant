@@ -25,4 +25,3 @@ dependencyResolutionManagement {
 rootProject.name = "jervy"
 include(":app")
 include(":core")
- 
