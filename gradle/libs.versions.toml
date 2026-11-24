@@ -8,7 +8,8 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.11.1"
 activityCompose = "1.13.0"
 kotlin = "2.4.21"
-composeBom = "2026.09.00"
+# Compose 1.13+ (BOM 2026.11.01+) exige compileSdk 37.1 (minCompileMinorSdk en sus AAR).
+composeBom = "2026.11.01"
 ktlintGradle = "14.2.0"
 ktlint = "1.8.0"
 

@@ -11,7 +11,7 @@ ktlint {
 android {
     namespace = "com.luiscoronel.jervy"
     compileSdk {
-        version = release(37)
+        version = release(37) { minorApiLevel = 1 }
     }
 
     defaultConfig {
@@ -40,7 +40,7 @@ android {
         compose = true
     }
     lint {
-        // targetSdk 36 con compileSdk 37 es intencional: ver "Decisiones tomadas" en CLAUDE.md.
+        // targetSdk 36 con compileSdk 37.1 es intencional: ver "Decisiones tomadas" en CLAUDE.md.
         // Revisar esta exclusión al probar en Android 17 (cuando se suba targetSdk a 37).
         disable += "OldTargetApi"
     }

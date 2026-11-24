@@ -70,8 +70,9 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 ### Stack y restricciones técnicas
 - **Lenguaje:** Kotlin. **UI:** Jetpack Compose (mínima: activar/pausar, estado, onboarding, logs de debug).
 - **Asincronía:** Coroutines + Flow / StateFlow.
-- **minSdk 31** (Android 12) — **targetSdk 36** (Android 16) — **compileSdk 37**.
+- **minSdk 31** (Android 12) — **targetSdk 36** (Android 16) — **compileSdk 37.1**.
 - **Build:** Gradle Kotlin DSL + version catalog (`libs.versions.toml`).
+- **IDE:** Android Studio Rabbit 2 (2026.2.2) o superior. La versión de AGP no puede superar la que soporta la última versión estable de Android Studio; el sync del IDE forma parte de la verificación de cualquier cambio de toolchain.
 - **Inyección de dependencias:** manual (un `AppContainer` simple). Sin Hilt en v1.
 - **Voz a texto:** `SpeechRecognizer` de Android (es-AR, fallback es-ES).
 - **Texto a voz:** `TextToSpeech` de Android (es-AR si está disponible).
@@ -132,8 +133,9 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-23 — Kotlin nativo, no React Native. — Services, notificaciones y audio son nativos; con RN igual habría que escribirlos en Kotlin.
 - 2026-11-23 — Sin AccessibilityService en v1. — Frágil y difícil de distribuir; se priorizan APIs oficiales.
 - 2026-11-23 — Parser por reglas en v1, LLM en v2. — Más simple, offline y testeable; el LLM entra detrás de la misma interfaz.
-- 2026-11-23 — targetSdk 36 con compileSdk 37. — Se compila contra las APIs nuevas sin adoptar todavía los cambios de comportamiento de Android 17, que no están probados. La regla de lint `OldTargetApi` queda desactivada; revisarla al probar en Android 17.
+- 2026-11-23 — targetSdk 36 con compileSdk 37.1. — Se compila contra las APIs nuevas sin adoptar todavía los cambios de comportamiento de Android 17, que no están probados. Se usa 37.1 (versión menor) porque Compose 1.13 (BOM 2026.11.01) lo exige. La regla de lint `OldTargetApi` queda desactivada; revisarla al probar en Android 17.
 - 2026-11-23 — core/ como módulo Gradle JVM puro (`:core`), no como paquete de app. — El compilador impide imports de Android y deja el camino listo para KMP.
+- 2026-11-23 — Gradle 9.9.2 con AGP 9.5.2. — AGP documenta 9.6.0 como mínimo (no lista 9.9 como probada); verificado con el build completo (assemble, test, lint, ktlintCheck), instalación en ambos teléfonos y sync de Android Studio.
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
