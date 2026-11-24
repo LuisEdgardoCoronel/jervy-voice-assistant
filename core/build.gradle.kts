@@ -22,5 +22,8 @@ kotlin {
 }
 
 dependencies {
+    // api: Flow aparece en las interfaces públicas del pipeline.
+    api(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
