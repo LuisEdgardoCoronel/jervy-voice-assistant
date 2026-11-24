@@ -77,7 +77,8 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 - **Inyección de dependencias:** manual (un `AppContainer` simple). Sin Hilt en v1.
 - **Voz a texto:** `SpeechRecognizer` de Android (es-AR, fallback es-ES).
 - **Texto a voz:** `TextToSpeech` de Android (es-AR si está disponible).
-- **Palabra clave:** **decisión abierta**, se resuelve en el paso 1 con un spike. Candidatos: Porcupine (Picovoice; verificar licencia y límites del plan gratuito) / Vosk en modo keyword spotting / openWakeWord vía ONNX Runtime.
+- **Palabra clave:** **decisión abierta**, se resuelve en la etapa 1 con un spike. Candidatos: Vosk (gramática restringida) / sherpa-onnx keyword spotting; openWakeWord vía ONNX Runtime como tercera opción. Pronunciación: "jervi", con "yervi" como variante.
+- **Modelos:** se descargan al compilar con una tarea de Gradle (URL y SHA-256 fijados en `libs.versions.toml`, caché en `~/.gradle/jervy-models/`) y se empaquetan como assets. No se versionan en git.
 - **Intérprete de órdenes v1:** gramática / reglas propias en Kotlin, sin red. Detrás de una interfaz para poder reemplazarlo por un LLM en v2.
 - **Dependencias permitidas:** solo las aprobadas en un plan.
 
@@ -88,7 +89,7 @@ Pipeline con una interfaz por etapa:
 WakeWordDetector → SpeechToText → CommandParser → Action → Speaker
 ```
 
-- `:core` — **módulo Gradle Kotlin/JVM puro (sin dependencia del SDK de Android)**: modelos de comando (`Command` sealed class), `CommandParser`, máquina de estados, normalización de texto. Totalmente testeable con JUnit y preparado para Kotlin Multiplatform a futuro. El resto (`audio/`, `actions/`, `system/`, `ui/`) son paquetes dentro del módulo `:app`, que depende de `:core`.
+- `:core` — **módulo Gradle Kotlin/JVM puro (sin dependencia del SDK de Android)**: interfaces de las etapas del pipeline (con `kotlinx-coroutines-core`), modelos de comando (`Command` sealed class), `CommandParser`, máquina de estados, normalización de texto. Totalmente testeable con JUnit y preparado para Kotlin Multiplatform a futuro. El resto (`audio/`, `actions/`, `system/`, `ui/`) son paquetes dentro del módulo `:app`, que depende de `:core`.
 - `audio/` — implementaciones de wake word, STT, TTS, audio focus, routing Bluetooth.
 - `actions/` — un archivo por comando (`ReadNotificationsAction`, `SendWhatsAppAction`, `CallContactAction`, `PlayMusicAction`, `MediaControlAction`, `StopAction`, `PauseAction`). Sumar un comando no toca el núcleo.
 - `system/` — `JervyService` (foreground service), `JervyNotificationListener`, repositorio de contactos, permisos.
@@ -137,6 +138,10 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-23 — targetSdk 36 con compileSdk 37.1. — Se compila contra las APIs nuevas sin adoptar todavía los cambios de comportamiento de Android 17, que no están probados. Se usa 37.1 (versión menor) porque Compose 1.13 (BOM 2026.11.01) lo exige. La regla de lint `OldTargetApi` queda desactivada; revisarla al probar en Android 17.
 - 2026-11-23 — core/ como módulo Gradle JVM puro (`:core`), no como paquete de app. — El compilador impide imports de Android y deja el camino listo para KMP.
 - 2026-11-23 — Gradle 9.9.2 con AGP 9.5.2. — AGP documenta 9.6.0 como mínimo (no lista 9.9 como probada); verificado con el build completo (assemble, test, lint, ktlintCheck), instalación en ambos teléfonos y sync de Android Studio.
+- 2026-11-24 — Porcupine descartado como motor de palabra clave. — Según Picovoice, las keys del plan gratuito dejaron de funcionar el 30/06/2026, no hay plan no comercial y valida la AccessKey por red (choca con NF3).
+- 2026-11-24 — Modelos descargados por Gradle con SHA-256 fijado y caché local en `~/.gradle/jervy-models/` (fuera de `caches/` para que la limpieza automática de Gradle no la borre). — Repo liviano, build reproducible y offline con la caché llena; la app no necesita permiso INTERNET.
+- 2026-11-24 — Interfaces de las etapas del pipeline en `:core`, implementaciones en `audio/` (y demás paquetes de `:app`). `:core` suma `kotlinx-coroutines-core`. — Mantiene `:core` testeable en JVM y listo para KMP.
+- 2026-11-24 — **Riesgo aceptado:** modelo KWS de sherpa-onnx con licencia de datos de entrenamiento no aclarada (GigaSpeech / zh-en). Aceptado solo para uso personal y de portfolio. — **Revisar antes de cualquier publicación o distribución más amplia.**
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).

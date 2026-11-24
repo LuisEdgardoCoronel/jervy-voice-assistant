@@ -15,6 +15,10 @@ kotlin = "2.4.21"
 composeBom = "2026.11.01"
 ktlintGradle = "14.2.0"
 ktlint = "1.8.0"
+# Modelo de Vosk para la palabra clave (licencia Apache 2.0). Lo descarga la tarea downloadVoskModel de :app.
+# Vosk no publica checksums: el SHA-256 se calculó en la primera descarga (HTTPS, sitio oficial) y queda fijado.
+voskModelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip"
+voskModelSha256 = "09b239888f633ef2f0b4e09736e3d9936acfd810bc65d53fad45261762c6511f"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
