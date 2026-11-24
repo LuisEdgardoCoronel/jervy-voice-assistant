@@ -146,4 +146,5 @@ adb logcat -s Jervy            # ver logs
 - iOS reducido (Siri Shortcuts / App Intents) reutilizando `:core` con Kotlin Multiplatform.
 - Limpiar warnings de lint heredados del template: `UnusedResources` (7) y `RedundantLabel` (1).
 - Paso 0.4: definir la versión de Java en un solo lugar para `:app` y `:core` (hoy cada módulo fija Java 11 por separado).
+- `ktlintCheck` imprime `WARNING: sun.misc.Unsafe::objectFieldOffset has been called…`: viene del compilador de Kotlin que trae ktlint 1.8.0 corriendo sobre JDK 25 (daemon). No rompe nada; revisar al actualizar ktlint.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.
