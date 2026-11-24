@@ -1,3 +1,17 @@
 <resources>
-    <string name="app_name">jervy</string>
+    <string name="app_name">Jervy</string>
+
+    <string name="notification_channel_name">Servicio de Jervy</string>
+    <string name="notification_text_listening">Jervy está escuchando</string>
+    <string name="notification_text_paused">Jervy está en pausa</string>
+
+    <string name="action_activate">Activar</string>
+    <string name="action_pause">Pausar</string>
+    <string name="action_resume">Reanudar</string>
+    <string name="action_close">Cerrar</string>
+
+    <string name="status_stopped">Jervy está apagado</string>
+    <string name="status_active">Jervy está activo</string>
+    <string name="status_paused">Jervy está en pausa</string>
+    <string name="permissions_missing">Faltan permisos de micrófono o notificaciones. Concedelos desde los ajustes de la app.</string>
 </resources>
