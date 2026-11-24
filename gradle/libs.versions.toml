@@ -1,4 +1,7 @@
 [versions]
+# Versión de Java (bytecode y source) para todos los módulos.
+# Sin decimales: "17", no "17.0" (lo leen JavaVersion.toVersion y JvmTarget.fromTarget).
+java = "17"
 agp = "9.5.2"
 # core-ktx 1.19+ exige compileSdk 37 y AGP 9.1+ (minCompileSdk en su AAR).
 coreKtx = "1.19.1"

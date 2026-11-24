@@ -72,6 +72,7 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 - **Asincronía:** Coroutines + Flow / StateFlow.
 - **minSdk 31** (Android 12) — **targetSdk 36** (Android 16) — **compileSdk 37.1**.
 - **Build:** Gradle Kotlin DSL + version catalog (`libs.versions.toml`).
+- **Java 17** (bytecode; definida una sola vez en `libs.versions.toml` como `java`).
 - **IDE:** Android Studio Rabbit 2 (2026.2.2) o superior. La versión de AGP no puede superar la que soporta la última versión estable de Android Studio; el sync del IDE forma parte de la verificación de cualquier cambio de toolchain.
 - **Inyección de dependencias:** manual (un `AppContainer` simple). Sin Hilt en v1.
 - **Voz a texto:** `SpeechRecognizer` de Android (es-AR, fallback es-ES).
@@ -147,6 +148,6 @@ adb logcat -s Jervy            # ver logs
 - Explorar el caso repartidores/conductores (validar con usuarios reales; no automatizar apps de terceros por sus términos de uso).
 - iOS reducido (Siri Shortcuts / App Intents) reutilizando `:core` con Kotlin Multiplatform.
 - Limpiar warnings de lint heredados del template: `UnusedResources` (7) y `RedundantLabel` (1).
-- Paso 0.4: definir la versión de Java en un solo lugar para `:app` y `:core` (hoy cada módulo fija Java 11 por separado).
+- Convention plugin (`build-logic/`) para la configuración compartida entre módulos (Java, ktlint), cuando haya más módulos que `:app` y `:core`.
 - `ktlintCheck` imprime `WARNING: sun.misc.Unsafe::objectFieldOffset has been called…`: viene del compilador de Kotlin que trae ktlint 1.8.0 corriendo sobre JDK 25 (daemon). No rompe nada; revisar al actualizar ktlint.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.
