@@ -16,12 +16,36 @@
    - decime qué tengo que probar a mano en el teléfono y en cuál (Samsung / Motorola)
    - señalá lo que no te convence o quedó pendiente
    - proponé un mensaje de commit (Conventional Commits)
+   Al cerrar cada paso, actualizá "Estado actual" y registrá en docs/ los resultados de las pruebas.
    Después frená y esperá. No arranques el paso siguiente.
 5. **Los commits los hago yo.** Nunca ejecutes `git commit`, `git push`, `git rebase`, `git reset`, `git merge` ni nada que modifique el historial. Podés usar `git status` y `git diff`.
 6. **Nada de scope creep.** No refactorices, renombres ni "mejores" cosas fuera del paso aprobado. Si ves algo, anotalo en "Pendientes" y avisame.
 7. **Dependencias nuevas: preguntar siempre.** No agregues librerías sin que lo apruebe en el plan.
 8. **Vengo de React Native.** Cuando introduzcas un concepto de Android nativo por primera vez (Service, Intent, permisos en runtime, ciclo de vida, coroutines/Flow, etc.), explicalo en 2-3 líneas y, si aplica, comparalo con su equivalente en RN. No hace falta repetirlo después.
 9. **Si la spec cambia** por una decisión que tomamos, proponé la edición a este archivo como parte del plan y registrala en "Decisiones tomadas".
+10. **Dispositivos de prueba.** Podés usar adb para instalar, leer logs y consultar información (getprop, dumpsys). Para interactuar con la pantalla, conceder o revocar permisos, cambiar propiedades o configuración del sistema, o borrar datos, primero preguntame. Las pruebas a mano las hago yo.
+
+## Estado actual
+
+- **Último paso cerrado:** 1.2b.2a — captura de micrófono, beep, TTS y bucle del servicio con botón de debug "Simular detección" (commit `de23650`). Resultados en `docs/spike-wake-word.md`.
+- **Próximo paso:** 1.2b.2b, parte 1 (plan acordado, falta el OK para arrancar).
+
+### Acordado para el 1.2b.2b
+**Parte 1:**
+- `VoskKeywordSpotter` (gramática `["jer vi","yer vi","jer bi","yer bi","[unk]"]`, detecta sobre el resultado parcial, loguea los finales y el tiempo por bloque cada 100 bloques).
+- `VoskModelLoader` (`StorageService.sync` + `Model`; si la carga falla, borra la copia y avisa con `error_model`). TTS y modelo se inicializan en paralelo.
+- Parser de resultados de Vosk en `app/audio`.
+- `TriggerableKeywordSpotter` en `:core` (decorador sobre el motor real, con test): "Simular detección" queda como herramienta de debug, solo en builds debuggable. Reemplaza a `ManualTriggerSpotter`.
+- `abiFilters` `arm64-v8a`.
+- Logs de tiempos en nivel Info (el Motorola oculta Debug).
+- Completar `docs/spike-wake-word.md` con la tabla de Vosk por teléfono.
+
+**Parte 2:**
+- Precalentar el TTS al inicializar (utterance con volumen 0; nada de `synthesizeToFile`, que escribe audio a disco).
+- Investigar por qué el beep termina a ~370 ms de la detección si dura 150 ms (hipótesis: `first()` espera el `stop()`/`release()` del `AudioRecord`).
+- Release firmado con la clave de debug, temporal hasta el APK firmado de la etapa 8; `assembleRelease` con R8 y reglas `-keep` para Vosk/JNA si hacen falta.
+
+**Pruebas:** el borrado del modelo para la prueba de error lo hace el usuario.
 
 ## Spec
 
