@@ -14,19 +14,47 @@ import androidx.core.content.ContextCompat
 import com.luiscoronel.jervy.MainActivity
 import com.luiscoronel.jervy.R
 
-/** Canal y notificación fija del servicio, con acciones Pausar/Reanudar y Cerrar. */
+/**
+ * Notificaciones de Jervy: la fija del servicio (con acciones Pausar/Reanudar y Cerrar) y la de
+ * error fatal, que queda visible después de que el servicio se detiene.
+ */
 object JervyNotification {
     const val NOTIFICATION_ID = 1
+    private const val ERROR_NOTIFICATION_ID = 2
     private const val CHANNEL_ID = "jervy_service"
+    private const val ERROR_CHANNEL_ID = "jervy_errors"
 
-    fun createChannel(context: Context) {
-        val channel =
+    fun createChannels(context: Context) {
+        val service =
             NotificationChannelCompat
                 .Builder(CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_LOW)
                 .setName(context.getString(R.string.notification_channel_name))
                 .setShowBadge(false)
                 .build()
-        NotificationManagerCompat.from(context).createNotificationChannel(channel)
+        val errors =
+            NotificationChannelCompat
+                .Builder(ERROR_CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+                .setName(context.getString(R.string.notification_error_channel_name))
+                .build()
+        NotificationManagerCompat.from(context).createNotificationChannelsCompat(listOf(service, errors))
+    }
+
+    /** Notificación común con el motivo de un error fatal. Sin permiso de notificaciones no hace nada. */
+    fun showError(
+        context: Context,
+        message: String,
+    ) {
+        val notification =
+            NotificationCompat
+                .Builder(context, ERROR_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(context.getString(R.string.error_title))
+                .setContentText(message)
+                .setContentIntent(activityPendingIntent(context))
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_ERROR)
+                .build()
+        notifyIfAllowed(context, ERROR_NOTIFICATION_ID, notification)
     }
 
     fun build(
@@ -82,13 +110,21 @@ object JervyNotification {
         context: Context,
         status: ServiceStatus,
     ) {
+        notifyIfAllowed(context, NOTIFICATION_ID, build(context, status))
+    }
+
+    private fun notifyIfAllowed(
+        context: Context,
+        id: Int,
+        notification: Notification,
+    ) {
         // POST_NOTIFICATIONS existe recién en Android 13; en 12 el permiso no se pide.
         val granted =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
                 PackageManager.PERMISSION_GRANTED
         if (granted) {
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, build(context, status))
+            NotificationManagerCompat.from(context).notify(id, notification)
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +26,8 @@ fun MainScreen(
     onPause: () -> Unit,
     onResume: () -> Unit,
     modifier: Modifier = Modifier,
+    // Solo en builds de debug (1.2b.2a): null oculta el botón.
+    onSimulateDetection: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -46,6 +49,11 @@ fun MainScreen(
             ServiceStatus.STOPPED -> Button(onClick = onActivate) { Text(stringResource(R.string.action_activate)) }
             ServiceStatus.ACTIVE -> Button(onClick = onPause) { Text(stringResource(R.string.action_pause)) }
             ServiceStatus.PAUSED -> Button(onClick = onResume) { Text(stringResource(R.string.action_resume)) }
+        }
+        if (onSimulateDetection != null && status == ServiceStatus.ACTIVE) {
+            OutlinedButton(onClick = onSimulateDetection) {
+                Text(stringResource(R.string.action_simulate_detection))
+            }
         }
         if (permissionsMissing) {
             Text(

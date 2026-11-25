@@ -2,6 +2,7 @@ package com.luiscoronel.jervy
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         onPause = { sendServiceAction(JervyService.ACTION_PAUSE) },
                         onResume = { sendServiceAction(JervyService.ACTION_RESUME) },
                         modifier = Modifier.padding(innerPadding),
+                        onSimulateDetection = if (isDebuggable()) container::simulateDetection else null,
                     )
                 }
             }
@@ -74,6 +76,8 @@ class MainActivity : ComponentActivity() {
         requiredPermissions.all {
             ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
+
+    private fun isDebuggable(): Boolean = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private fun startJervyService() {
         ContextCompat.startForegroundService(this, serviceIntent(JervyService.ACTION_START))

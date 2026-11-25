@@ -12,6 +12,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 class SpottingWakeWordDetectorTest {
     @Test
@@ -22,6 +25,26 @@ class SpottingWakeWordDetectorTest {
             val detection = detector.detections().first()
 
             assertEquals(KEYWORD, detection.keyword)
+        }
+
+    @Test
+    fun `detectedAt marca el momento en que el motor reconocio la palabra`() =
+        runTest {
+            val timeSource = TestTimeSource()
+            val start = timeSource.markNow()
+            val source =
+                AudioSource {
+                    flow {
+                        emit(SILENCE)
+                        timeSource += 300.milliseconds
+                        emit(MATCH)
+                        timeSource += 1.seconds
+                    }
+                }
+
+            val detection = SpottingWakeWordDetector(source, FakeSpotter(), timeSource).detections().first()
+
+            assertEquals(300.milliseconds, detection.detectedAt - start)
         }
 
     @Test
