@@ -29,7 +29,7 @@
 
 El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decisiones).
 
-- **Último paso cerrado:** 1.2b.3c — diagnóstico del micrófono: nivel RMS en el log cada 5 s y fuente elegible al compilar (`-PmicSource=VOICE_RECOGNITION|MIC|UNPROCESSED`, temporal). Falta la prueba en los teléfonos (tabla en `docs/spike-wake-word.md`) y el commit. Anterior: 1.2b.3b (commit `3214b04`; resultados: Vosk escucha "jeili" sobre todo como "hey li"; el Samsung acierta menos que el Motorola).
+- **Último paso cerrado:** 1.2b.3c — diagnóstico del micrófono: nivel RMS en el log cada 5 s y fuente elegible al compilar (`-PmicSource=VOICE_RECOGNITION|MIC|UNPROCESSED`, temporal). Probado en los dos teléfonos: VOICE_RECOGNITION ≥ MIC en ambos; el nivel de la voz es parecido en los dos; los fallos son mitades sueltas de la clave ("hey", "li"). Ver la conclusión en `docs/spike-wake-word.md`. Falta el commit de los resultados. Anterior: 1.2b.3b (commit `3214b04`; resultados: Vosk escucha "jeili" sobre todo como "hey li"; el Samsung acierta menos que el Motorola).
 - **Próximo paso:** con los resultados del diagnóstico, decidir la fuente y borrar `-PmicSource` y `buildConfig` (lo de `AudioLevel` se decide ahí). Después, frases trampa y música con la gramática actual, y achicar la gramática (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 
 ### Datos para el ajuste de la gramática

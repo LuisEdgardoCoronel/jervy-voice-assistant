@@ -125,12 +125,22 @@ Frases trampa y música: sin medir. Quedan para después del diagnóstico del mi
 
 | Teléfono / fuente | Dispositivo y efectos | RMS de fondo | RMS máx al hablar | Pico | Aciertos / 10 | Variantes |
 |---|---|---|---|---|---|---|
-| Samsung / VOICE_RECOGNITION | | | | | | |
-| Samsung / MIC | | | | | | |
-| Motorola / VOICE_RECOGNITION | | | | | | |
-| Motorola / MIC | | | | | | |
+| Samsung / VOICE_RECOGNITION | SM-A346M (tipo 15, integrado); UNPROCESSED no soportada; AGC no, NS sí, AEC sí | −58,4 / −59,9 dBFS | sin medir (ver nota) | −32,1 / −40,4 dBFS en silencio | 11 detecciones, 0 fallos en el log | hey li 7, hayley 2, hey lee 2 |
+| Samsung / MIC | Igual que VOICE_RECOGNITION | −57,9 / −58,6 dBFS | −23,2 a −36,5 dBFS (en los resúmenes que agarraron voz) | −11,3 a −18,0 dBFS al hablar | 8 / 10; 3 fallos en el log ("lee", "li", "hey" sueltos) | hey li 7, hayley 1 |
+| Motorola / VOICE_RECOGNITION | moto g22 (tipo 15, integrado); UNPROCESSED no soportada; AGC sí, NS sí, AEC sí | −64,2 dBFS | −33,4 / −34,9 dBFS | −18,1 / −20,2 dBFS al hablar | 9 / 10; 1 fallo ("hey" suelto) | hey li 5, hayley 3, hey lee 1 |
+| Motorola / MIC | Igual que VOICE_RECOGNITION | −56,7 / −53,5 dBFS | −31,6 a −33,9 dBFS | −20,3 a −23,3 dBFS al hablar | 8 / 10; 1 fallo ("li" suelto), 1 sin rastro en el log | hey li 3, hey lee 3, hayley 2 |
+
+**Nota de medición:** cada detección cierra y vuelve a abrir el micrófono, y eso reinicia el resumen de nivel. Con un "jeili" cada 3–4 s casi no se completan los 5 s, así que el nivel de la voz quedó sin medir y solo hay resúmenes de los períodos de silencio. El usuario decidió seguir sin corregirlo: la comparación entre fuentes se hace por aciertos y por el ruido de fondo.
+
+Tiempo por bloque en el Motorola: prom 19–29 ms; máx 175–196 ms en la primera ventana (arranque) y 66–106 ms después.
 
 **Conclusión:**
+- **VOICE_RECOGNITION anda igual o mejor que MIC en los dos teléfonos:** Samsung 11 detecciones sin fallos contra 8/10; Motorola 9/10 contra 8/10. Con 10 intentos la diferencia es chica, pero va siempre en la misma dirección.
+- **El nivel de la voz es parecido en los dos teléfonos:** el bloque más fuerte queda entre −31 y −36 dBFS y el pico entre −11 y −23. Ninguno satura ni llega tan bajo como para perder la voz. La diferencia de sensibilidad del 3b no se explica por el nivel de entrada.
+- **Con VOICE_RECOGNITION baja el ruido de fondo:** en el Motorola pasa de −54/−57 dBFS con MIC a −64 dBFS, por la supresión de ruido. En el Samsung casi no cambia (−58/−60 contra −58/−59).
+- **El Samsung no ofrece control automático de ganancia y el Motorola sí.** Ninguno de los dos soporta UNPROCESSED.
+- **En esta tanda el Samsung acertó más que en el 3b**, con 11 detecciones y 0 fallos. La "menor sensibilidad" de aquella prueba parece haber sido variación entre tandas (distancia, forma de decirlo) y no el micrófono.
+- **Los fallos siguen siendo mitades sueltas** ("hey", "li", "lee"), en los dos teléfonos y con las dos fuentes. Eso apunta a la gramática o al modelo, no al audio.
 
 ## sherpa-onnx (1.2c)
 
