@@ -14,6 +14,7 @@ kotlin = "2.4.21"
 # Compose 1.13+ (BOM 2026.11.01+) exige compileSdk 37.1 (minCompileMinorSdk en sus AAR).
 composeBom = "2026.11.01"
 coroutines = "1.11.0"
+vosk = "0.3.75"
 ktlintGradle = "14.2.0"
 ktlint = "1.8.0"
 # Modelo de Vosk para la palabra clave (licencia Apache 2.0). Lo descarga la tarea downloadVoskModel de :app.
@@ -27,6 +28,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
 kotlinx-coroutines-test ={ group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

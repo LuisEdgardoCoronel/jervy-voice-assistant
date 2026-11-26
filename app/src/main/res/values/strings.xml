@@ -22,6 +22,7 @@
     <string name="error_title">Jervy se detuvo</string>
     <string name="error_microphone">No pude usar el micrófono.</string>
     <string name="error_speaker">No pude iniciar la voz.</string>
+    <string name="error_model">No pude cargar el modelo de la palabra clave.</string>
     <string name="error_generic">Ocurrió un error inesperado.</string>
 
     <string name="permissions_missing">Faltan permisos de micrófono o notificaciones. Concedelos desde los ajustes de la app.</string>

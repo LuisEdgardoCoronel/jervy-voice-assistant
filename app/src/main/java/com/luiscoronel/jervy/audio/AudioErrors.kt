@@ -10,3 +10,9 @@ class SpeakerUnavailableException(
     message: String,
     cause: Throwable? = null,
 ) : Exception(message, cause)
+
+/** No se pudo copiar o cargar el modelo de la palabra clave. Es un error fatal para el servicio. */
+class ModelUnavailableException(
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause)

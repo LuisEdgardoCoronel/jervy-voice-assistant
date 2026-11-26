@@ -36,7 +36,7 @@ class AudioRecordSource(
                 if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
                     throw MicrophoneUnavailableException("AudioRecord no empezó a grabar (¿otra app tiene el micrófono?)")
                 }
-                Log.d(TAG, "Micrófono abierto en ${openedAt.elapsedNow().inWholeMilliseconds} ms")
+                Log.i(TAG, "Micrófono abierto en ${openedAt.elapsedNow().inWholeMilliseconds} ms")
                 while (currentCoroutineContext().isActive) {
                     val frame = ShortArray(FRAME_SIZE)
                     val read = record.read(frame, 0, FRAME_SIZE)

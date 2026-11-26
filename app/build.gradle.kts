@@ -29,6 +29,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Los dos teléfonos de prueba son arm64-v8a: se descartan las librerías nativas de las otras ABIs
+        // (Vosk y JNA traen cuatro o más).
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
     }
 
     buildTypes {
@@ -50,6 +56,8 @@ android {
         // targetSdk 36 con compileSdk 37.1 es intencional: ver "Decisiones tomadas" en CLAUDE.md.
         // Revisar esta exclusión al probar en Android 17 (cuando se suba targetSdk a 37).
         disable += "OldTargetApi"
+        // Solo arm64-v8a (abiFilters): ChromeOS no es un objetivo. Revisar si se vuelve a sumar x86_64.
+        disable += "ChromeOsAbiSupport"
     }
 }
 
@@ -64,6 +72,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.vosk.android)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -122,7 +131,7 @@ abstract class DownloadModelTask : DefaultTask() {
             eachFile { relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray()) }
             includeEmptyDirs = false
         }
-        // vosk-android (StorageService.unpack) compara este archivo para saber si ya copió el modelo.
+        // vosk-android (StorageService.sync) compara este archivo para saber si ya copió el modelo.
         target.resolve("uuid").writeText(expected)
     }
 

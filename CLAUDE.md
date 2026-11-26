@@ -27,19 +27,10 @@
 
 ## Estado actual
 
-- **Último paso cerrado:** 1.2b.2a — captura de micrófono, beep, TTS y bucle del servicio con botón de debug "Simular detección" (commit `de23650`). Resultados en `docs/spike-wake-word.md`.
-- **Próximo paso:** 1.2b.2b, parte 1 (plan acordado, falta el OK para arrancar).
+- **Último paso cerrado:** 1.2b.2b parte 1 — Vosk como motor real (`VoskKeywordSpotter`, `VoskModelLoader`, `VoskResultParser`), `TriggerableKeywordSpotter` para "Simular detección", `abiFilters` `arm64-v8a` y logs de tiempos en Info. Resultados parciales en `docs/spike-wake-word.md`: "jer vi" da activaciones falsas ("ayer vi").
+- **Próximo paso:** plan del renombre del asistente a **Halley** (pronunciado "jeili"; voz femenina): textos visibles, spec, gramática de Vosk y, según se decida, lo interno. Después, la parte 2 del 1.2b.2b.
 
 ### Acordado para el 1.2b.2b
-**Parte 1:**
-- `VoskKeywordSpotter` (gramática `["jer vi","yer vi","jer bi","yer bi","[unk]"]`, detecta sobre el resultado parcial, loguea los finales y el tiempo por bloque cada 100 bloques).
-- `VoskModelLoader` (`StorageService.sync` + `Model`; si la carga falla, borra la copia y avisa con `error_model`). TTS y modelo se inicializan en paralelo.
-- Parser de resultados de Vosk en `app/audio`.
-- `TriggerableKeywordSpotter` en `:core` (decorador sobre el motor real, con test): "Simular detección" queda como herramienta de debug, solo en builds debuggable. Reemplaza a `ManualTriggerSpotter`.
-- `abiFilters` `arm64-v8a`.
-- Logs de tiempos en nivel Info (el Motorola oculta Debug).
-- Completar `docs/spike-wake-word.md` con la tabla de Vosk por teléfono.
-
 **Parte 2:**
 - Precalentar el TTS al inicializar (utterance con volumen 0; nada de `synthesizeToFile`, que escribe audio a disco).
 - Investigar por qué el beep termina a ~370 ms de la detección si dura 150 ms (hipótesis: `first()` espera el `stop()`/`release()` del `AudioRecord`).
@@ -131,7 +122,7 @@ El micrófono nunca escucha órdenes mientras Jervy habla.
   - **Corpus de frases:** `core/src/test/resources/frases.txt` con frases reales en español rioplatense ("mandale", "poneme", "che jervy fijate si…") y el comando esperado. Es la suite de regresión del parser; se amplía con cada frase que falle en la calle.
   - Lo que depende de Android se prueba a mano en el teléfono, con checklist en la revisión de cada paso.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- **Logs:** tag `Jervy`, con tiempos por etapa del pipeline (NF1).
+- **Logs:** tag `Jervy`, con tiempos por etapa del pipeline (NF1) en nivel Info: algunos teléfonos (el Motorola) ocultan Debug.
 
 ### Comandos
 ```bash
@@ -166,6 +157,9 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-24 — Modelos descargados por Gradle con SHA-256 fijado y caché local en `~/.gradle/jervy-models/` (fuera de `caches/` para que la limpieza automática de Gradle no la borre). — Repo liviano, build reproducible y offline con la caché llena; la app no necesita permiso INTERNET.
 - 2026-11-24 — Interfaces de las etapas del pipeline en `:core`, implementaciones en `audio/` (y demás paquetes de `:app`). `:core` suma `kotlinx-coroutines-core`. — Mantiene `:core` testeable en JVM y listo para KMP.
 - 2026-11-24 — **Riesgo aceptado:** modelo KWS de sherpa-onnx con licencia de datos de entrenamiento no aclarada (GigaSpeech / zh-en). Aceptado solo para uso personal y de portfolio. — **Revisar antes de cualquier publicación o distribución más amplia.**
+- 2026-11-25 — Logs de tiempos en nivel Info, no Debug. — El Motorola filtra Debug (`log.tag=I`) y obligaba a cambiar una propiedad del sistema en cada prueba.
+- 2026-11-25 — "Simular detección" queda como herramienta de debug (solo builds debuggable), como decorador (`TriggerableKeywordSpotter`) sobre el motor real. — Permite probar el pipeline sin hablar; el motor real sigue recibiendo todo el audio. En release no existe.
+- 2026-11-25 — Solo ABI `arm64-v8a` (los dos teléfonos de prueba). Regla de lint `ChromeOsAbiSupport` desactivada. — Ahorra ~30 MB de librerías nativas de Vosk/JNA. Consecuencia: la app no corre en emuladores x86_64.
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
@@ -179,4 +173,7 @@ adb logcat -s Jervy            # ver logs
 - Limpiar warnings de lint heredados del template: `UnusedResources` (7) y `RedundantLabel` (1).
 - Convention plugin (`build-logic/`) para la configuración compartida entre módulos (Java, ktlint), cuando haya más módulos que `:app` y `:core`.
 - `ktlintCheck` imprime `WARNING: sun.misc.Unsafe::objectFieldOffset has been called…`: viene del compilador de Kotlin que trae ktlint 1.8.0 corriendo sobre JDK 25 (daemon). No rompe nada; revisar al actualizar ktlint.
+- Si el servicio se cierra mientras se inicializan el TTS o el modelo, lo que ya se creó no se cierra (pérdida de memoria nativa hasta que muere el proceso). Revisar con la máquina de estados (etapa 2).
+- Bug: pausar mientras carga el modelo deja que el micrófono se abra ~60 ms después de la pausa (Motorola, 15:26:27.828 → 27.888). Hipótesis: la escucha arranca justo antes de la pausa y abrir el `AudioRecord` es una llamada bloqueante que no se interrumpe al cancelar; el micrófono se suelta recién en el primer chequeo del bucle. Revisar con la máquina de estados (etapa 2).
+- Si falla un "Hola" no se avisa: si el TTS falla siempre, Jervy queda sin voz y sin aviso. Revisar en la etapa 2.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.

@@ -1,16 +1,21 @@
 package com.luiscoronel.jervy
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import com.luiscoronel.jervy.audio.AndroidSpeaker
 import com.luiscoronel.jervy.audio.AudioRecordSource
 import com.luiscoronel.jervy.audio.BeepPlayer
-import com.luiscoronel.jervy.audio.ManualTriggerSpotter
+import com.luiscoronel.jervy.audio.VoskKeywordSpotter
+import com.luiscoronel.jervy.audio.VoskModelLoader
 import com.luiscoronel.jervy.core.pipeline.AudioSource
 import com.luiscoronel.jervy.core.pipeline.KeywordSpotter
+import com.luiscoronel.jervy.core.pipeline.TriggerableKeywordSpotter
 import com.luiscoronel.jervy.system.ServiceStatus
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 
 /**
  * Inyección de dependencias manual: un único contenedor por proceso, creado en [JervyApplication].
@@ -23,20 +28,33 @@ class AppContainer(
     private val mutableServiceStatus = MutableStateFlow(ServiceStatus.STOPPED)
     val serviceStatus: StateFlow<ServiceStatus> = mutableServiceStatus.asStateFlow()
 
+    private val debuggable = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+
+    /** Motor en uso con el disparador de debug; null en release o si el servicio no arrancó. */
+    @Volatile
+    private var triggerable: TriggerableKeywordSpotter? = null
+
     fun updateServiceStatus(status: ServiceStatus) {
         mutableServiceStatus.value = status
     }
 
-    // 1.2b.2a: motor simulado con el botón de debug. En el 1.2b.2b se reemplaza por Vosk.
-    private val manualSpotter = ManualTriggerSpotter()
-
+    /** Botón de debug "Simular detección". En release no hace nada. */
     fun simulateDetection() {
-        manualSpotter.trigger()
+        triggerable?.trigger()
     }
 
     fun createAudioSource(): AudioSource = AudioRecordSource(context)
 
-    fun createKeywordSpotter(): KeywordSpotter = manualSpotter
+    /** Carga el modelo y crea el motor de Vosk. En builds debuggable lo envuelve con el disparador de debug. */
+    suspend fun createKeywordSpotter(): KeywordSpotter {
+        // Crear el reconocedor compila la gramática (código nativo): fuera del hilo principal.
+        val vosk =
+            withContext(Dispatchers.IO) {
+                VoskKeywordSpotter.create(VoskModelLoader(context).load(), AudioRecordSource.SAMPLE_RATE)
+            }
+        if (!debuggable) return vosk
+        return TriggerableKeywordSpotter(vosk).also { triggerable = it }
+    }
 
     suspend fun createSpeaker(): AndroidSpeaker = AndroidSpeaker.create(context)
 

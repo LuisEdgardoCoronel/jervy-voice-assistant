@@ -40,7 +40,7 @@ class AndroidSpeaker private constructor(
             object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String) {
                     val elapsed = pending[utteranceId]?.requestedAt?.elapsedNow()?.inWholeMilliseconds
-                    Log.d(TAG, "TTS empezó a hablar a $elapsed ms de pedirlo")
+                    Log.i(TAG, "TTS empezó a hablar a $elapsed ms de pedirlo")
                 }
 
                 override fun onDone(utteranceId: String) {
@@ -115,7 +115,7 @@ class AndroidSpeaker private constructor(
                 } catch (e: TimeoutCancellationException) {
                     throw SpeakerUnavailableException("El TTS no se inicializó en $INIT_TIMEOUT_MS ms", e)
                 }
-            Log.d(TAG, "TTS inicializado en ${startedAt.elapsedNow().inWholeMilliseconds} ms")
+            Log.i(TAG, "TTS inicializado en ${startedAt.elapsedNow().inWholeMilliseconds} ms")
             return AndroidSpeaker(tts).also { it.configure() }
         }
 

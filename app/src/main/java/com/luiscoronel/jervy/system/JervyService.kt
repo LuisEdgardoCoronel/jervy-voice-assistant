@@ -13,6 +13,7 @@ import com.luiscoronel.jervy.R
 import com.luiscoronel.jervy.audio.AndroidSpeaker
 import com.luiscoronel.jervy.audio.BeepPlayer
 import com.luiscoronel.jervy.audio.MicrophoneUnavailableException
+import com.luiscoronel.jervy.audio.ModelUnavailableException
 import com.luiscoronel.jervy.audio.SpeakerUnavailableException
 import com.luiscoronel.jervy.core.pipeline.KeywordSpotter
 import com.luiscoronel.jervy.core.pipeline.SpottingWakeWordDetector
@@ -23,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -118,15 +120,37 @@ class JervyService : Service() {
         scope.launch { setUpPipeline() }
     }
 
+    /** TTS y modelo se inicializan en paralelo: la primera copia del modelo no se suma a lo que tarda el TTS. */
     private suspend fun setUpPipeline() {
+        val pendingSpeaker = scope.async { container.createSpeaker() }
+        val spotter =
+            try {
+                container.createKeywordSpotter()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // ModelUnavailableException o algo inesperado del código nativo: fatal, avisa y se detiene.
+                val speaker =
+                    try {
+                        pendingSpeaker.await()
+                    } catch (_: SpeakerUnavailableException) {
+                        null
+                    }
+                try {
+                    fail(e, speaker)
+                } finally {
+                    speaker?.close()
+                }
+                return
+            }
         val speaker =
             try {
-                container.createSpeaker()
+                pendingSpeaker.await()
             } catch (e: SpeakerUnavailableException) {
+                spotter.close()
                 fail(e, speaker = null)
                 return
             }
-        val spotter = container.createKeywordSpotter()
         pipeline =
             Pipeline(
                 detector = SpottingWakeWordDetector(container.createAudioSource(), spotter),
@@ -162,10 +186,10 @@ class JervyService : Service() {
             val detection = withContext(Dispatchers.Default) { pipeline.detector.detections().first() }
             Log.i(TAG, "Palabra clave detectada: ${detection.keyword}")
             pipeline.beep.beep()
-            Log.d(TAG, "Beep terminado a ${detection.detectedAt.elapsedNow().inWholeMilliseconds} ms de la detección")
+            Log.i(TAG, "Beep terminado a ${detection.detectedAt.elapsedNow().inWholeMilliseconds} ms de la detección")
             try {
                 pipeline.speaker.speak(getString(R.string.tts_hello))
-                Log.d(TAG, "Respuesta terminada a ${detection.detectedAt.elapsedNow().inWholeMilliseconds} ms de la detección")
+                Log.i(TAG, "Respuesta terminada a ${detection.detectedAt.elapsedNow().inWholeMilliseconds} ms de la detección")
             } catch (e: SpeakerUnavailableException) {
                 // Una respuesta que falla no es fatal: se vuelve a escuchar.
                 Log.w(TAG, "No se pudo decir la respuesta", e)
@@ -207,6 +231,7 @@ class JervyService : Service() {
         when (error) {
             is MicrophoneUnavailableException -> R.string.error_microphone
             is SpeakerUnavailableException -> R.string.error_speaker
+            is ModelUnavailableException -> R.string.error_model
             else -> R.string.error_generic
         }
 
