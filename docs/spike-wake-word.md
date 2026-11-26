@@ -108,7 +108,9 @@ Frases trampa y música: sin medir. Quedan para después del diagnóstico del mi
 
 **Pregunta:** ¿el Samsung escucha peor porque le llega menos señal, o porque la señal viene más procesada?
 
-**Configuración (temporal; se borra al cerrar el diagnóstico):**
+**Cierre:** la fuente queda fija en VOICE_RECOGNITION y se borró la propiedad `micSource`. El log de nivel se queda y suma una línea `Mic (parcial, N bloques): …` al soltar el micrófono, así cada detección deja el nivel de esa palabra clave.
+
+**Configuración durante el diagnóstico (ya borrada):**
 - La fuente se elige al compilar: `./gradlew installDebug -PmicSource=MIC`. Sin la propiedad se usa `VOICE_RECOGNITION`. También acepta `UNPROCESSED`, que falla con error si el teléfono no la soporta.
 - Al abrir el micrófono se loguea `Micrófono: fuente …, dispositivo …, UNPROCESSED soportada …, disponibles AGC/NS/AEC …`.
 - Cada 5 s se loguea `Mic: RMS prom X dBFS, máx Y dBFS, pico Z dBFS`:

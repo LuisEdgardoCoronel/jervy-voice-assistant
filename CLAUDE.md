@@ -29,8 +29,8 @@
 
 El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decisiones).
 
-- **Último paso cerrado:** 1.2b.3c — diagnóstico del micrófono: nivel RMS en el log cada 5 s y fuente elegible al compilar (`-PmicSource=VOICE_RECOGNITION|MIC|UNPROCESSED`, temporal). Probado en los dos teléfonos: VOICE_RECOGNITION ≥ MIC en ambos; el nivel de la voz es parecido en los dos; los fallos son mitades sueltas de la clave ("hey", "li"). Ver la conclusión en `docs/spike-wake-word.md`. Falta el commit de los resultados. Anterior: 1.2b.3b (commit `3214b04`; resultados: Vosk escucha "jeili" sobre todo como "hey li"; el Samsung acierta menos que el Motorola).
-- **Próximo paso:** con los resultados del diagnóstico, decidir la fuente y borrar `-PmicSource` y `buildConfig` (lo de `AudioLevel` se decide ahí). Después, frases trampa y música con la gramática actual, y achicar la gramática (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
+- **Último paso cerrado:** cierre del diagnóstico del micrófono (1.2b.3c): la fuente queda fija en VOICE_RECOGNITION y se borraron `-PmicSource`, `buildConfig` y `MicSource`. `AudioLevel` se queda, con `flush()` para que cada detección deje el nivel de esa palabra (ver Pendientes). Diagnóstico: VOICE_RECOGNITION ≥ MIC en los dos teléfonos; la voz llega a niveles parecidos en ambos; los fallos son mitades sueltas de la clave ("hey", "li"). Detalle en `docs/spike-wake-word.md`. Falta el commit.
+- **Próximo paso:** frases trampa y música con la gramática actual. Después, achicar o ajustar la gramática (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 
 ### Datos para el ajuste de la gramática
 - Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei".
@@ -188,4 +188,5 @@ adb logcat -s Halley           # ver logs
 - Lint `AndroidGradlePluginVersion`: hay AGP 9.5.3 (usamos 9.5.2). Antes de actualizar, verificar que la última versión estable de Android Studio la soporte (ver Stack) y hacer el sync del IDE.
 - Bug: pausar mientras carga el modelo deja que el micrófono se abra ~60 ms después de la pausa (Motorola, 15:26:27.828 → 27.888). Hipótesis: la escucha arranca justo antes de la pausa y abrir el `AudioRecord` es una llamada bloqueante que no se interrumpe al cancelar; el micrófono se suelta recién en el primer chequeo del bucle. Revisar con la máquina de estados (etapa 2).
 - Si falla un "Hola" no se avisa: si el TTS falla siempre, Halley queda sin voz y sin aviso. Revisar en la etapa 2.
+- Al cerrar el 1.3: revisar `AudioLevel` y sus logs de nivel (cada 5 s y al soltar el micrófono). Se dejaron para medir bolsillo y auto en el 1.3; decidir si quedan (¿solo en debug?) o se sacan.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.

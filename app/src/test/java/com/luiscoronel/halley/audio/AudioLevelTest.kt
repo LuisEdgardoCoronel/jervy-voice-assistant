@@ -58,6 +58,26 @@ class AudioLevelTest {
     }
 
     @Test
+    fun `flush da el periodo a medias y empieza otro`() {
+        val level = AudioLevel(50)
+        level.add(ShortArray(1600))
+        level.add(sine(3277))
+        val report = level.flush()!!
+        assertEquals(2, report.frames)
+        assertEquals(-23.0, report.maxFrameRmsDbfs, 0.05)
+        assertNull(level.flush())
+    }
+
+    @Test
+    fun `flush sin bloques o justo despues de un resumen devuelve null`() {
+        val level = AudioLevel(1)
+        assertNull(level.flush())
+        val report = level.add(sine(3277))!!
+        assertEquals(1, report.frames)
+        assertNull(level.flush())
+    }
+
+    @Test
     fun `bloque vacio no rompe`() {
         val report = AudioLevel(1).add(ShortArray(0))!!
         assertEquals(AudioLevel.MIN_DBFS, report.rmsDbfs, DELTA)

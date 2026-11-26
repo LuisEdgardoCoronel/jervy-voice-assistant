@@ -35,15 +35,6 @@ android {
         ndk {
             abiFilters += "arm64-v8a"
         }
-
-        // Diagnóstico del micrófono (1.2b.3c), temporal: se borra al cerrar el diagnóstico.
-        // ./gradlew installDebug -PmicSource=MIC (por defecto VOICE_RECOGNITION).
-        val micSource = providers.gradleProperty("micSource").getOrElse("VOICE_RECOGNITION")
-        val micSources = setOf("VOICE_RECOGNITION", "MIC", "UNPROCESSED")
-        if (micSource !in micSources) {
-            throw GradleException("micSource=$micSource no es válida; usar una de $micSources")
-        }
-        buildConfigField("String", "MIC_SOURCE", "\"$micSource\"")
     }
 
     buildTypes {
@@ -60,8 +51,6 @@ android {
     }
     buildFeatures {
         compose = true
-        // Solo para MIC_SOURCE (diagnóstico del 1.2b.3c).
-        buildConfig = true
     }
     lint {
         // targetSdk 36 con compileSdk 37.1 es intencional: ver "Decisiones tomadas" en CLAUDE.md.

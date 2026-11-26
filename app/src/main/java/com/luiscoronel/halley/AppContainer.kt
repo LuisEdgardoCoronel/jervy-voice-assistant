@@ -43,7 +43,7 @@ class AppContainer(
         triggerable?.trigger()
     }
 
-    fun createAudioSource(): AudioSource = AudioRecordSource(context, AudioRecordSource.MicSource.valueOf(BuildConfig.MIC_SOURCE))
+    fun createAudioSource(): AudioSource = AudioRecordSource(context)
 
     /** Carga el modelo y crea el motor de Vosk. En builds debuggable lo envuelve con el disparador de debug. */
     suspend fun createKeywordSpotter(): KeywordSpotter {

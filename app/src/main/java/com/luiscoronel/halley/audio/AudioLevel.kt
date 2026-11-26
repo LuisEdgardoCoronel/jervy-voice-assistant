@@ -7,7 +7,8 @@ import kotlin.math.sqrt
 
 /**
  * Nivel del micrófono para diagnóstico: junta bloques de PCM 16 bits y cada [framesPerReport] bloques
- * devuelve un [Report] en dBFS (0 dBFS = escala completa). Solo guarda sumas y máximos, nunca audio (NF4).
+ * devuelve un [Report] en dBFS (0 dBFS = escala completa); [flush] da el del período a medias. Solo
+ * guarda sumas y máximos, nunca audio (NF4).
  */
 class AudioLevel(
     private val framesPerReport: Int,
@@ -16,11 +17,13 @@ class AudioLevel(
      * @property rmsDbfs RMS de todo el período: con silencio, el ruido de fondo.
      * @property maxFrameRmsDbfs RMS del bloque más fuerte: el nivel de la voz.
      * @property peakDbfs muestra más alta: cerca de 0 indica saturación.
+     * @property frames bloques que abarca (menos que el período si viene de [flush]).
      */
     data class Report(
         val rmsDbfs: Double,
         val maxFrameRmsDbfs: Double,
         val peakDbfs: Double,
+        val frames: Int,
     )
 
     private var frames = 0
@@ -45,10 +48,18 @@ class AudioLevel(
         sumSquares += frameSquares
         samples += frame.size
         frames++
-        if (frames < framesPerReport) return null
+        return if (frames < framesPerReport) null else report()
+    }
 
+    /**
+     * Devuelve el resumen del período a medias (p. ej. al soltar el micrófono tras una detección) y
+     * empieza otro; null si no hubo bloques desde el último resumen.
+     */
+    fun flush(): Report? = if (frames == 0) null else report()
+
+    private fun report(): Report {
         val overallRms = if (samples > 0) sqrt(sumSquares / samples) else 0.0
-        val report = Report(toDbfs(overallRms), toDbfs(maxFrameRms), toDbfs(peak.toDouble()))
+        val report = Report(toDbfs(overallRms), toDbfs(maxFrameRms), toDbfs(peak.toDouble()), frames)
         frames = 0
         samples = 0
         sumSquares = 0.0
