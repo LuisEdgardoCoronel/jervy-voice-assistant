@@ -100,7 +100,15 @@ Impresión del usuario: el Samsung se notó menos sensible que el Motorola.
 |---|---|
 | Activaciones falsas en 10 min de música en inglés | |
 
-Frases trampa y música: sin medir. Quedan para después del diagnóstico del micrófono.
+**Frases trampa, resultado global (Samsung, 2026-11-26, fuente VOICE_RECOGNITION):** 2 "jeili" de control y después las 8 frases, 5 veces cada una (40 en total).
+- **19 detecciones en total.** Descontando las 2 de control, hubo **17 activaciones falsas en 40 frases (~43 %)**.
+  - Variantes, contando todas las detecciones: hey li 7, hayley 6, hey lee 4, hey ley 1, halley 1.
+  - Disparan también las de una sola palabra (`hayley`, `halley`), no solo las de dos.
+- **Otros 7 resultados finales sin detección:** "li" ×3, "lee", "ley" y "ley lee" ×2. Hay además 2 detecciones ("hey li", "hey lee") que salieron del resultado final y no del parcial.
+- No se pudieron asignar las detecciones a cada frase: las pausas de 10 s entre frases no se distinguen en el log. La tabla de arriba queda sin completar por frase.
+- Nivel de cada detección (`Mic (parcial…)`): máx −32 a −45 dBFS, igual que con "jeili". Por el nivel no se distinguen.
+
+Música: sin medir. Con este resultado, se decide antes si vale la pena medirla.
 
 **Conclusión parcial:** Vosk escucha "jeili" sobre todo como "hey li", que es una variante de dos palabras. De las de una palabra solo aparece `hayley`, y pocas veces. Los fallos son mitades sueltas de la clave ("hey", "li", "lee", "ley"). Antes de medir las trampas se investiga por qué el Samsung escucha peor.
 
