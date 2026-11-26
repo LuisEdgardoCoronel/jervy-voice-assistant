@@ -9,9 +9,11 @@ import java.io.IOException
 /**
  * [KeywordSpotter] con Vosk y una gramática restringida a la palabra clave.
  *
- * "jervi"/"yervi" no están en el vocabulario del modelo: la gramática usa pares de palabras que
- * suenan igual ([KEYWORDS]); `[unk]` absorbe todo lo demás. Detecta sobre el resultado parcial
- * (menos latencia) y también sobre el final, si el parcial no la mostró.
+ * "Halley" se pronuncia "jeili". El vocabulario del modelo tiene `hailey`, `haley`, `hayley` y
+ * `halley`, pero no trae sus pronunciaciones (no se sabe si suenan "jeili" o "ailei"): la gramática
+ * de diagnóstico ([KEYWORDS]) prueba esas cuatro y tres pares de palabras ("hey li"…), y el log dice
+ * cuál detectó; después se achica a las que funcionen. `[unk]` absorbe todo lo demás. Detecta sobre
+ * el resultado parcial (menos latencia) y también sobre el final, si el parcial no la mostró.
  *
  * Con esa gramática Vosk solo puede devolver esas palabras o `[unk]`: los logs no traen lo que
  * dijo el usuario (NF4).
@@ -67,7 +69,9 @@ class VoskKeywordSpotter private constructor(
         private const val TAG = "Halley"
         private const val BLOCKS_PER_REPORT = 100
         private const val NANOS_PER_MS = 1_000_000L
-        val KEYWORDS = listOf("jer vi", "yer vi", "jer bi", "yer bi")
+
+        // Diagnóstico: las de una palabra son las preferidas; las de dos se miden (mismo riesgo que "jer vi").
+        val KEYWORDS = listOf("hailey", "haley", "hayley", "halley", "hey li", "hey lee", "hey ley")
         private val GRAMMAR = (KEYWORDS + "[unk]").joinToString(",", "[", "]") { "\"$it\"" }
 
         /** Crea el reconocedor sobre [model]. Si falla, cierra el modelo y lanza [ModelUnavailableException]. */

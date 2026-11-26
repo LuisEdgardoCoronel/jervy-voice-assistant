@@ -1,25 +1,25 @@
 <resources>
-    <string name="app_name">Jervy</string>
+    <string name="app_name">Halley</string>
 
-    <string name="notification_channel_name">Servicio de Jervy</string>
-    <string name="notification_text_listening">Jervy está escuchando</string>
-    <string name="notification_text_paused">Jervy está en pausa</string>
+    <string name="notification_channel_name">Servicio de Halley</string>
+    <string name="notification_text_listening">Halley está escuchando</string>
+    <string name="notification_text_paused">Halley está en pausa</string>
 
     <string name="action_activate">Activar</string>
     <string name="action_pause">Pausar</string>
     <string name="action_resume">Reanudar</string>
     <string name="action_close">Cerrar</string>
 
-    <string name="status_stopped">Jervy está apagado</string>
-    <string name="status_active">Jervy está activo</string>
-    <string name="status_paused">Jervy está en pausa</string>
+    <string name="status_stopped">Halley está apagado</string>
+    <string name="status_active">Halley está activo</string>
+    <string name="status_paused">Halley está en pausa</string>
     <string name="action_simulate_detection">Simular detección</string>
 
     <string name="tts_hello">Hola</string>
     <string name="tts_error">Error, me apago</string>
 
     <string name="notification_error_channel_name">Errores</string>
-    <string name="error_title">Jervy se detuvo</string>
+    <string name="error_title">Halley se detuvo</string>
     <string name="error_microphone">No pude usar el micrófono.</string>
     <string name="error_speaker">No pude iniciar la voz.</string>
     <string name="error_model">No pude cargar el modelo de la palabra clave.</string>

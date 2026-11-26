@@ -1,4 +1,4 @@
-# CLAUDE.md — Jervy
+# CLAUDE.md — Halley
 
 ## Forma de trabajo (leer antes de cualquier cambio)
 
@@ -27,27 +27,16 @@
 
 ## Estado actual
 
-El asistente se renombra de **Jervy** a **Halley** (pronunciado "jeili", como el inglés "Hailey"; voz femenina) porque la palabra clave "jer vi" daba activaciones falsas en Vosk ("ayer vi"; ver `docs/spike-wake-word.md`).
+El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decisiones).
 
-- **Último paso cerrado:** 1.2b.3a — renombre interno (opción C2): paquete y namespace `com.luiscoronel.halley`, **applicationId `com.luiscoronel.halley`** (es otra app para Android: hay que desinstalar Jervy, conceder permisos de nuevo y el modelo se copia a otra carpeta), clases `HalleyApplication`/`HalleyService`/`HalleyNotification`, `Theme.Halley`, `HalleyTheme`, tag de log `Halley`, canales `halley_service`/`halley_errors`, `rootProject.name` y grupo de tareas `halley`. El caché del modelo sigue en `~/.gradle/jervy-models/` (decisión: no volver a descargar). Los textos visibles **todavía dicen "Jervy"**: es el 3b.
-- **Próximo paso:** 1.2b.3b (plan acordado abajo). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
+- **Último paso cerrado:** 1.2b.3b — textos visibles y spec con el nombre Halley; gramática de diagnóstico de Vosk `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`. Falta la prueba en los teléfonos (tabla "jeili" en `docs/spike-wake-word.md`) y el commit. Anterior: 1.2b.3a (commit `974e014`).
+- **Próximo paso:** con los resultados del 3b, achicar la gramática a las variantes que funcionen (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 
-### Acordado para el 1.2b.3b — lo visible, la spec y la gramática nueva
-**Textos (`strings.xml`):** `app_name` "Halley" y los 8 textos que dicen "Jervy" (canal "Servicio de Halley", "Halley está escuchando", "Halley está en pausa", "Halley está apagado/activo/en pausa", "Halley se detuvo").
-
-**Spec (este archivo):** título "CLAUDE.md — Halley"; Objetivo ("espera la palabra clave 'Halley'"); R2 (detección de "Halley"); ejemplos de R3–R8 ("Halley, pausa", "Halley, es todo por hoy", "Halley, ¿tengo notificaciones?", "Halley, mandale…", "Halley, llamá a mamá", "Halley, poné…"); corpus ("che Halley fijate si…"); "Máquina de estados" ("mientras Halley habla"); línea "Palabra clave" del Stack (pronunciación "jeili"; sin "jervi"/"yervi"); línea "Texto a voz" con **voz femenina**; el plan B ante activaciones falsas (no figura todavía en este archivo; va en el plan del 1.3) pasa a "Oye Halley". Las Decisiones viejas que dicen "Jervy" quedan como están (son historia); el historial de git no se toca.
-
-**Decisión a registrar:** "2026-11-25 — El asistente se llama Halley (pronunciado 'jeili', voz femenina); antes Jervy. — 'jer vi' en Vosk daba activaciones falsas con frases comunes ('ayer vi'): una palabra clave armada con dos palabras cortas y frecuentes es frágil. El TTS en español lee 'Halley' como 'alei': cuando Halley diga su nombre, el texto hablado se escribe 'Jeili'."
-
-**Gramática de Vosk (corrida de diagnóstico):** `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`.
-- Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei". Lo decide la prueba.
-- Se prefieren las variantes de una sola palabra; las de dos ("hey li"…) se incluyen solo para medirlas (mismo riesgo que "jer vi").
-- Después de 20 intentos se achica la gramática a las variantes que aparecen (el log dice cuál detectó).
-- Cambios en código: `VoskKeywordSpotter.KEYWORDS` y su KDoc; ejemplos de `VoskResultParserTest`.
-- Frases trampa: "hay ley", "ahí lee", "hay líos", "hey, listo", "jalea", "Leila", "Kelly", "Heidi"; más 10 min de música en inglés (mucho "hey").
-- Nota para el 1.2c: "Hailey" es un nombre inglés común; el modelo en inglés de sherpa-onnx podría andarle mejor.
-
-**Verificación:** `test`, `lint ktlintCheck`. Samsung: 20 × "jeili" a 30 cm y a 1 m contando qué variante detectó, frases trampa y 10 min de música. Motorola: 20 × en silencio y tiempo por bloque. Resultados a `docs/spike-wake-word.md`.
+### Datos para el ajuste de la gramática
+- Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei".
+- Se prefieren las variantes de una sola palabra; las de dos ("hey li"…) están solo para medirlas (mismo riesgo que "jer vi").
+- Si ninguna variante anda bien: probar sherpa-onnx en inglés (1.2c) antes de pensar otro nombre. "Hailey" es un nombre inglés común.
+- El plan B ante activaciones falsas ("Oye Halley") va en el plan del 1.3.
 
 ### Acordado para el 1.2b.2b
 **Parte 2:**
@@ -60,7 +49,7 @@ El asistente se renombra de **Jervy** a **Halley** (pronunciado "jeili", como el
 ## Spec
 
 ### Objetivo
-Jervy es un asistente de voz para Android, manos libres, pensado para usar mientras manejás o hacés actividad física (con auriculares). Se abre, queda corriendo en segundo plano con una notificación fija, espera la palabra clave "Jervy" y ejecuta órdenes habladas, respondiendo por voz.
+Halley es un asistente de voz para Android, manos libres, pensado para usar mientras manejás o hacés actividad física (con auriculares). Se abre, queda corriendo en segundo plano con una notificación fija, espera la palabra clave "Halley" y ejecuta órdenes habladas, respondiendo por voz.
 
 Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK). **No se publica en Play Store.** Prioridad: pocos comandos que funcionen de forma sólida, buena arquitectura, tests y una demo real.
 
@@ -69,30 +58,30 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 - **No incluye (por ahora):** iOS, publicación en Play Store, AccessibilityService / simulación de toques, LLM, llamadas por WhatsApp, integración con apps de delivery/viajes, UI elaborada.
 
 ### Requisitos funcionales
-1. **R1 — Servicio en segundo plano.** Al abrir la app y tocar "Activar", arranca un foreground service de tipo micrófono con notificación fija ("Jervy está escuchando"). La notificación tiene acciones: Pausar/Reanudar y Cerrar.
-2. **R2 — Palabra clave local.** Detección de "Jervy" 100% en el dispositivo (sin red). Recién al detectarla se escucha la orden. Señal sonora corta al activarse.
+1. **R1 — Servicio en segundo plano.** Al abrir la app y tocar "Activar", arranca un foreground service de tipo micrófono con notificación fija ("Halley está escuchando"). La notificación tiene acciones: Pausar/Reanudar y Cerrar.
+2. **R2 — Palabra clave local.** Detección de "Halley" 100% en el dispositivo (sin red). Recién al detectarla se escucha la orden. Señal sonora corta al activarse.
 3. **R3 — Pausa y cierre.**
-   - "Jervy, pausa" → libera el micrófono (detector apagado, consumo mínimo). Se reanuda desde la notificación o la app.
-   - "Jervy, es todo por hoy" → responde una despedida, detiene el servicio y quita la notificación.
-4. **R4 — Notificaciones.** "Jervy, ¿tengo notificaciones?" → dice cuántas hay y de qué apps; si se pide ("leelas"), lee remitente y texto. Usa NotificationListenerService. Ignora notificaciones propias, persistentes y de sistema.
-5. **R5 — WhatsApp.** "Jervy, mandale un mensaje a mamá que diga llegaré tarde" →
+   - "Halley, pausa" → libera el micrófono (detector apagado, consumo mínimo). Se reanuda desde la notificación o la app.
+   - "Halley, es todo por hoy" → responde una despedida, detiene el servicio y quita la notificación.
+4. **R4 — Notificaciones.** "Halley, ¿tengo notificaciones?" → dice cuántas hay y de qué apps; si se pide ("leelas"), lee remitente y texto. Usa NotificationListenerService. Ignora notificaciones propias, persistentes y de sistema.
+5. **R5 — WhatsApp.** "Halley, mandale un mensaje a mamá que diga llegaré tarde" →
    - resuelve el contacto (ver R7)
    - **siempre confirma por voz**: "¿Le mando a Mamá: 'llegaré tarde'? Decí sí o no."
    - si hay una notificación reciente de WhatsApp de ese contacto con acción de respuesta → responde por ahí (RemoteInput), funciona con pantalla bloqueada
    - si no → abre el chat con el texto precargado vía intent y avisa que hay que tocar enviar (v1 no automatiza el toque)
-6. **R6 — Llamadas.** "Jervy, llamá a mamá" → resuelve contacto (R7), confirma por voz y llama con `ACTION_CALL` (permiso CALL_PHONE). Solo llamadas telefónicas normales.
+6. **R6 — Llamadas.** "Halley, llamá a mamá" → resuelve contacto (R7), confirma por voz y llama con `ACTION_CALL` (permiso CALL_PHONE). Solo llamadas telefónicas normales.
 7. **R7 — Resolución de contactos.** Búsqueda por nombre en Contactos, tolerante a mayúsculas y acentos. Si hay más de una coincidencia, pregunta cuál ("Tengo Mamá y Mamá Trabajo, ¿cuál?"). Si no hay ninguna, lo dice. Contactos con varios números: usa el principal o el móvil.
-8. **R8 — Música.** "Jervy, poné la lista rock nacional en YouTube Music" → intent de reproducción por búsqueda (`MEDIA_PLAY_FROM_SEARCH`) dirigido a YouTube Music. Controles: pausa, seguí, siguiente, anterior → vía MediaSession / MediaController de la sesión activa. Si la búsqueda no encuentra la lista exacta, se acepta lo que la app reproduzca y Jervy dice qué está sonando.
+8. **R8 — Música.** "Halley, poné la lista rock nacional en YouTube Music" → intent de reproducción por búsqueda (`MEDIA_PLAY_FROM_SEARCH`) dirigido a YouTube Music. Controles: pausa, seguí, siguiente, anterior → vía MediaSession / MediaController de la sesión activa. Si la búsqueda no encuentra la lista exacta, se acepta lo que la app reproduzca y Halley dice qué está sonando.
 9. **R9 — Respuesta ante lo que no entiende.** "No entendí, ¿podés repetir?" — máximo un reintento, después vuelve a esperar la palabra clave.
 10. **R10 — Onboarding de permisos.** Pantalla que guía paso a paso: micrófono, notificaciones, acceso a notificaciones, contactos, teléfono, exclusión de optimización de batería, y el aviso de "configuración restringida" para APKs instalados a mano (Android 13+). Muestra qué está concedido y qué falta.
 
 ### Requisitos no funcionales
-- **NF1 — Latencia:** < 2 s desde que el usuario termina de hablar hasta que Jervy empieza a responder (objetivo). Loguear tiempos por etapa.
+- **NF1 — Latencia:** < 2 s desde que el usuario termina de hablar hasta que Halley empieza a responder (objetivo). Loguear tiempos por etapa.
 - **NF2 — Estabilidad:** el servicio sobrevive ≥ 1 h con pantalla apagada, música sonando y auriculares Bluetooth en ambos teléfonos de prueba.
 - **NF3 — Datos:** en espera de palabra clave, 0 tráfico de red.
 - **NF4 — Privacidad:** nunca se guarda audio. Los logs no incluyen contenido de mensajes ni de notificaciones en builds release.
 - **NF5 — Seguridad:** toda acción que envía algo o contacta a alguien (R5, R6) requiere confirmación verbal. El contenido de notificaciones es **dato**, nunca se interpreta como orden.
-- **NF6 — Audio:** cuando Jervy habla, la música baja de volumen (ducking) y vuelve después. Debe funcionar con micrófono de auriculares Bluetooth y del auto.
+- **NF6 — Audio:** cuando Halley habla, la música baja de volumen (ducking) y vuelve después. Debe funcionar con micrófono de auriculares Bluetooth y del auto.
 - **NF7 — Manos libres:** ningún flujo de R1–R9 requiere mirar o tocar la pantalla, salvo el fallback de R5 y la reanudación de R3.
 
 ### Dispositivos de prueba
@@ -110,8 +99,8 @@ Es un proyecto de portfolio y de uso personal (compartible con amigos vía APK).
 - **IDE:** Android Studio Rabbit 2 (2026.2.2) o superior. La versión de AGP no puede superar la que soporta la última versión estable de Android Studio; el sync del IDE forma parte de la verificación de cualquier cambio de toolchain.
 - **Inyección de dependencias:** manual (un `AppContainer` simple). Sin Hilt en v1.
 - **Voz a texto:** `SpeechRecognizer` de Android (es-AR, fallback es-ES).
-- **Texto a voz:** `TextToSpeech` de Android (es-AR si está disponible).
-- **Palabra clave:** **decisión abierta**, se resuelve en la etapa 1 con un spike. Candidatos: Vosk (gramática restringida) / sherpa-onnx keyword spotting; openWakeWord vía ONNX Runtime como tercera opción. Pronunciación: "jervi", con "yervi" como variante.
+- **Texto a voz:** `TextToSpeech` de Android (es-AR si está disponible), voz femenina.
+- **Palabra clave:** **decisión abierta**, se resuelve en la etapa 1 con un spike. Candidatos: Vosk (gramática restringida) / sherpa-onnx keyword spotting; openWakeWord vía ONNX Runtime como tercera opción. Pronunciación: "jeili" (como el inglés "Hailey").
 - **Modelos:** se descargan al compilar con una tarea de Gradle (URL y SHA-256 fijados en `libs.versions.toml`, caché en `~/.gradle/jervy-models/`) y se empaquetan como assets. No se versionan en git.
 - **Intérprete de órdenes v1:** gramática / reglas propias en Kotlin, sin red. Detrás de una interfaz para poder reemplazarlo por un LLM en v2.
 - **Dependencias permitidas:** solo las aprobadas en un plan.
@@ -131,14 +120,14 @@ WakeWordDetector → SpeechToText → CommandParser → Action → Speaker
 
 **Máquina de estados** (en `core/`, explícita):
 `PAUSADO → ESPERANDO_PALABRA → ESCUCHANDO_ORDEN → PROCESANDO → (CONFIRMANDO) → HABLANDO → ESPERANDO_PALABRA`
-El micrófono nunca escucha órdenes mientras Jervy habla.
+El micrófono nunca escucha órdenes mientras Halley habla.
 
 ### Convenciones
 - **Estilo:** ktlint (oficial de Kotlin) + Android Lint. Sin warnings nuevos.
 - **Naming:** clases en PascalCase, funciones/variables en camelCase, recursos en snake_case. Textos de usuario en `strings.xml` (español).
 - **Tests:**
   - `core/` con JUnit + kotlinx-coroutines-test; cobertura alta del parser y la máquina de estados.
-  - **Corpus de frases:** `core/src/test/resources/frases.txt` con frases reales en español rioplatense ("mandale", "poneme", "che jervy fijate si…") y el comando esperado. Es la suite de regresión del parser; se amplía con cada frase que falle en la calle.
+  - **Corpus de frases:** `core/src/test/resources/frases.txt` con frases reales en español rioplatense ("mandale", "poneme", "che Halley fijate si…") y el comando esperado. Es la suite de regresión del parser; se amplía con cada frase que falle en la calle.
   - Lo que depende de Android se prueba a mano en el teléfono, con checklist en la revisión de cada paso.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - **Logs:** tag `Halley`, con tiempos por etapa del pipeline (NF1) en nivel Info: algunos teléfonos (el Motorola) ocultan Debug.
@@ -180,13 +169,14 @@ adb logcat -s Halley           # ver logs
 - 2026-11-25 — "Simular detección" queda como herramienta de debug (solo builds debuggable), como decorador (`TriggerableKeywordSpotter`) sobre el motor real. — Permite probar el pipeline sin hablar; el motor real sigue recibiendo todo el audio. En release no existe.
 - 2026-11-25 — Solo ABI `arm64-v8a` (los dos teléfonos de prueba). Regla de lint `ChromeOsAbiSupport` desactivada. — Ahorra ~30 MB de librerías nativas de Vosk/JNA. Consecuencia: la app no corre en emuladores x86_64.
 - 2026-11-25 — Renombre interno completo a Halley, incluido el applicationId (`com.luiscoronel.halley`). — Es el momento más barato: después del onboarding (etapa 3) y con APKs compartidos, cambiar el ID obliga a reinstalar y reconfigurar todo. El caché del modelo conserva el nombre `jervy-models` para no volver a descargarlo.
+- 2026-11-25 — El asistente se llama Halley (pronunciado "jeili", voz femenina); antes Jervy. — "jer vi" en Vosk daba activaciones falsas con frases comunes ("ayer vi"): una palabra clave armada con dos palabras cortas y frecuentes es frágil. El TTS en español lee "Halley" como "alei": cuando Halley diga su nombre, el texto hablado se escribe "Jeili".
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
 - v2: AccessibilityService como fallback (tocar "enviar" en WhatsApp, abrir listas en YouTube Music).
 - Llamadas por WhatsApp.
 - Atender / rechazar llamadas entrantes por voz (útil manejando).
-- "Jervy, ¿qué está sonando?" y control de volumen.
+- "Halley, ¿qué está sonando?" y control de volumen.
 - Registrarse en Android developer verification antes de que llegue a Argentina (expansión global prevista para 2027) para poder seguir compartiendo el APK.
 - Explorar el caso repartidores/conductores (validar con usuarios reales; no automatizar apps de terceros por sus términos de uso).
 - iOS reducido (Siri Shortcuts / App Intents) reutilizando `:core` con Kotlin Multiplatform.
@@ -197,5 +187,5 @@ adb logcat -s Halley           # ver logs
 - Etapa 8: renombrar el repo en GitHub (`jervy-voice-assistant`; GitHub redirige la URL vieja) y la carpeta local; actualizar el remote si hace falta y volver a abrir el proyecto en Android Studio. La memoria de Claude Code está guardada por la ruta de la carpeta: la de la ruta vieja queda huérfana.
 - Lint `AndroidGradlePluginVersion`: hay AGP 9.5.3 (usamos 9.5.2). Antes de actualizar, verificar que la última versión estable de Android Studio la soporte (ver Stack) y hacer el sync del IDE.
 - Bug: pausar mientras carga el modelo deja que el micrófono se abra ~60 ms después de la pausa (Motorola, 15:26:27.828 → 27.888). Hipótesis: la escucha arranca justo antes de la pausa y abrir el `AudioRecord` es una llamada bloqueante que no se interrumpe al cancelar; el micrófono se suelta recién en el primer chequeo del bucle. Revisar con la máquina de estados (etapa 2).
-- Si falla un "Hola" no se avisa: si el TTS falla siempre, Jervy queda sin voz y sin aviso. Revisar en la etapa 2.
+- Si falla un "Hola" no se avisa: si el TTS falla siempre, Halley queda sin voz y sin aviso. Revisar en la etapa 2.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.

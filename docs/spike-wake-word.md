@@ -65,6 +65,40 @@ Resultados parciales: la prueba se cortó al decidir el cambio de nombre (ver Co
 
 **Conclusión:** el rendimiento de Vosk alcanza en los dos teléfonos (incluido el Motorola de gama baja), pero "jer vi" da activaciones falsas con frases comunes ("ayer vi"): con una palabra clave armada con dos palabras cortas y frecuentes del español, la gramática no alcanza para descartarlas. **Por eso el asistente cambia de nombre a Halley** (pronunciado "jeili"). La evaluación de Vosk sigue con la palabra clave nueva.
 
+## Vosk con "Halley" / "jeili" (1.2b.3b)
+
+**Gramática de diagnóstico:** `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`. El log (`Palabra clave detectada: <variante>`) dice cuál detectó: se anota la variante de cada acierto para achicar la gramática después.
+
+**Aciertos (20 intentos de "jeili" por fila):**
+
+| Prueba | Samsung A34 | Motorola G22 |
+|---|---|---|
+| A 30 cm, en silencio (aciertos / 20) | | |
+| A 1 m, en silencio (aciertos / 20) | | — |
+| Variantes detectadas (cantidad de cada una) | | |
+| Tiempo por bloque, prom / máx | | |
+
+**Frases trampa (5 veces cada una, Samsung):**
+
+| Frase | Activaciones / 5 | Variante detectada |
+|---|---|---|
+| "hay ley" | | |
+| "ahí lee" | | |
+| "hay líos" | | |
+| "hey, listo" | | |
+| "jalea" | | |
+| "Leila" | | |
+| "Kelly" | | |
+| "Heidi" | | |
+
+**Música (Samsung):**
+
+| Prueba | Resultado |
+|---|---|
+| Activaciones falsas en 10 min de música en inglés | |
+
+**Notas:**
+
 ## sherpa-onnx (1.2c)
 
 _Pendiente._

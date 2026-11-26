@@ -7,12 +7,12 @@ import org.junit.Test
 class VoskResultParserTest {
     @Test
     fun `lee el resultado parcial con el formato de Vosk`() {
-        assertEquals("jer vi", VoskResultParser.text("{\n  \"partial\" : \"jer vi\"\n}"))
+        assertEquals("hailey", VoskResultParser.text("{\n  \"partial\" : \"hailey\"\n}"))
     }
 
     @Test
     fun `lee el resultado final`() {
-        assertEquals("yer vi", VoskResultParser.text("{\n  \"text\" : \"yer vi\"\n}"))
+        assertEquals("hey li", VoskResultParser.text("{\n  \"text\" : \"hey li\"\n}"))
     }
 
     @Test
@@ -23,14 +23,15 @@ class VoskResultParserTest {
     }
 
     @Test
-    fun `encuentra la palabra clave`() {
-        assertEquals("jer vi", VoskResultParser.findKeyword("jer vi", KEYWORDS))
-        assertEquals("yer bi", VoskResultParser.findKeyword("yer bi", KEYWORDS))
+    fun `encuentra la palabra clave de una palabra`() {
+        assertEquals("hailey", VoskResultParser.findKeyword("hailey", KEYWORDS))
+        assertEquals("halley", VoskResultParser.findKeyword("[unk] halley", KEYWORDS))
     }
 
     @Test
-    fun `encuentra la palabra clave entre unk`() {
-        assertEquals("jer vi", VoskResultParser.findKeyword("[unk] jer [unk] vi [unk]", KEYWORDS))
+    fun `encuentra la palabra clave de dos palabras, tambien entre unk`() {
+        assertEquals("hey lee", VoskResultParser.findKeyword("hey lee", KEYWORDS))
+        assertEquals("hey li", VoskResultParser.findKeyword("[unk] hey [unk] li [unk]", KEYWORDS))
     }
 
     @Test
@@ -41,17 +42,17 @@ class VoskResultParserTest {
 
     @Test
     fun `media palabra clave no es deteccion`() {
-        assertNull(VoskResultParser.findKeyword("jer", KEYWORDS))
-        assertNull(VoskResultParser.findKeyword("vi jer", KEYWORDS))
+        assertNull(VoskResultParser.findKeyword("hey", KEYWORDS))
+        assertNull(VoskResultParser.findKeyword("li hey", KEYWORDS))
     }
 
     @Test
     fun `no confunde palabras que contienen la clave`() {
-        assertNull(VoskResultParser.findKeyword("jervi", KEYWORDS))
-        assertNull(VoskResultParser.findKeyword("ajer vino", KEYWORDS))
+        assertNull(VoskResultParser.findKeyword("haileys", KEYWORDS))
+        assertNull(VoskResultParser.findKeyword("hey lima", KEYWORDS))
     }
 
     private companion object {
-        val KEYWORDS = listOf("jer vi", "yer vi", "jer bi", "yer bi")
+        val KEYWORDS = listOf("hailey", "haley", "hayley", "halley", "hey li", "hey lee", "hey ley")
     }
 }
