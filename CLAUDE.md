@@ -29,12 +29,12 @@
 
 El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decisiones).
 
-- **Último paso cerrado:** 1.2b.3b — textos visibles y spec con el nombre Halley; gramática de diagnóstico de Vosk `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`. Falta la prueba en los teléfonos (tabla "jeili" en `docs/spike-wake-word.md`) y el commit. Anterior: 1.2b.3a (commit `974e014`).
-- **Próximo paso:** con los resultados del 3b, achicar la gramática a las variantes que funcionen (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
+- **Último paso cerrado:** 1.2b.3c — diagnóstico del micrófono: nivel RMS en el log cada 5 s y fuente elegible al compilar (`-PmicSource=VOICE_RECOGNITION|MIC|UNPROCESSED`, temporal). Falta la prueba en los teléfonos (tabla en `docs/spike-wake-word.md`) y el commit. Anterior: 1.2b.3b (commit `3214b04`; resultados: Vosk escucha "jeili" sobre todo como "hey li"; el Samsung acierta menos que el Motorola).
+- **Próximo paso:** con los resultados del diagnóstico, decidir la fuente y borrar `-PmicSource` y `buildConfig` (lo de `AudioLevel` se decide ahí). Después, frases trampa y música con la gramática actual, y achicar la gramática (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 
 ### Datos para el ajuste de la gramática
 - Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei".
-- Se prefieren las variantes de una sola palabra; las de dos ("hey li"…) están solo para medirlas (mismo riesgo que "jer vi").
+- Se prefieren las variantes de una sola palabra; las de dos ("hey li"…) están solo para medirlas (mismo riesgo que "jer vi"). En la prueba del 3b, "hey li" fue la más detectada en los dos teléfonos (16 de 24 aciertos); de una palabra solo apareció `hayley` (4); `hailey`, `haley` y `halley`, nunca.
 - Si ninguna variante anda bien: probar sherpa-onnx en inglés (1.2c) antes de pensar otro nombre. "Hailey" es un nombre inglés común.
 - El plan B ante activaciones falsas ("Oye Halley") va en el plan del 1.3.
 

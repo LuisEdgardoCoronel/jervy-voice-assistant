@@ -69,14 +69,17 @@ Resultados parciales: la prueba se cortó al decidir el cambio de nombre (ver Co
 
 **Gramática de diagnóstico:** `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`. El log (`Palabra clave detectada: <variante>`) dice cuál detectó: se anota la variante de cada acierto para achicar la gramática después.
 
-**Aciertos (20 intentos de "jeili" por fila):**
+**Aciertos de "jeili", en silencio.** Se hicieron menos intentos de los 20 previstos y no se separaron por distancia:
 
 | Prueba | Samsung A34 | Motorola G22 |
 |---|---|---|
-| A 30 cm, en silencio (aciertos / 20) | | |
-| A 1 m, en silencio (aciertos / 20) | | — |
-| Variantes detectadas (cantidad de cada una) | | |
-| Tiempo por bloque, prom / máx | | |
+| Aciertos | 14 de al menos 17 intentos (≤ 82 %) | 10 / 11 (91 %) |
+| Variantes detectadas | hey li 10, hey ley 2, hey lee 1, hayley 1 | hey li 6, hayley 3, hey lee 1 |
+| Variantes que nunca aparecieron | hailey, haley, halley | hailey, haley, halley |
+| Fallos (`Vosk final`) | 3: "li", "lee", "hey" sueltos | 1: "ley" |
+| Tiempo por bloque, prom / máx | 7–9 / 38–72 ms | 19–26 / 77–135 ms (varias ventanas arriba de 100 ms; con la gramática de 4 variantes fue 104 una sola vez) |
+
+Impresión del usuario: el Samsung se notó menos sensible que el Motorola.
 
 **Frases trampa (5 veces cada una, Samsung):**
 
@@ -97,7 +100,37 @@ Resultados parciales: la prueba se cortó al decidir el cambio de nombre (ver Co
 |---|---|
 | Activaciones falsas en 10 min de música en inglés | |
 
-**Notas:**
+Frases trampa y música: sin medir. Quedan para después del diagnóstico del micrófono.
+
+**Conclusión parcial:** Vosk escucha "jeili" sobre todo como "hey li", que es una variante de dos palabras. De las de una palabra solo aparece `hayley`, y pocas veces. Los fallos son mitades sueltas de la clave ("hey", "li", "lee", "ley"). Antes de medir las trampas se investiga por qué el Samsung escucha peor.
+
+## Diagnóstico del micrófono (1.2b.3c)
+
+**Pregunta:** ¿el Samsung escucha peor porque le llega menos señal, o porque la señal viene más procesada?
+
+**Configuración (temporal; se borra al cerrar el diagnóstico):**
+- La fuente se elige al compilar: `./gradlew installDebug -PmicSource=MIC`. Sin la propiedad se usa `VOICE_RECOGNITION`. También acepta `UNPROCESSED`, que falla con error si el teléfono no la soporta.
+- Al abrir el micrófono se loguea `Micrófono: fuente …, dispositivo …, UNPROCESSED soportada …, disponibles AGC/NS/AEC …`.
+- Cada 5 s se loguea `Mic: RMS prom X dBFS, máx Y dBFS, pico Z dBFS`:
+  - "prom" es el RMS de los 5 s; en silencio, el ruido de fondo;
+  - "máx" es el bloque de 100 ms más fuerte, o sea la voz;
+  - "pico" es la muestra más alta; cerca de 0 indica que satura.
+- Las referencias de dBFS: 0 es la escala completa, −90 el silencio digital y cada −6 dB es la mitad de la amplitud.
+
+**Protocolo:** misma habitación, misma voz, teléfono a 30 cm. En cada combinación:
+1. 10 s callado.
+2. 10 × "jeili", con una pausa de unos 3 s entre cada uno.
+
+**Resultados:**
+
+| Teléfono / fuente | Dispositivo y efectos | RMS de fondo | RMS máx al hablar | Pico | Aciertos / 10 | Variantes |
+|---|---|---|---|---|---|---|
+| Samsung / VOICE_RECOGNITION | | | | | | |
+| Samsung / MIC | | | | | | |
+| Motorola / VOICE_RECOGNITION | | | | | | |
+| Motorola / MIC | | | | | | |
+
+**Conclusión:**
 
 ## sherpa-onnx (1.2c)
 
