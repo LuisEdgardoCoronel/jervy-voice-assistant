@@ -5,7 +5,7 @@ Teléfonos: Samsung A34 (Android 16) y Motorola G22 (Android 12), ambos `arm64-v
 
 ## Cómo medir
 
-- Logs: `adb logcat -s Jervy`.
+- Logs: `adb logcat -s Halley` (hasta el 1.2b.2b el tag era `Jervy`).
 - Audio Bluetooth: `adb shell dumpsys audio` (esperado `MODE_NORMAL`, sin SCO: la música sigue en A2DP).
 - Los logs de tiempos están en nivel Info desde el 1.2b.2b. En el 1.2b.2a estaban en Debug y el Motorola los ocultaba (`log.tag=I`).
 - Las detecciones simuladas con el botón de debug aparecen como `Palabra clave detectada: simulada`: no se cuentan en las métricas.
@@ -54,7 +54,7 @@ Resultados parciales: la prueba se cortó al decidir el cambio de nombre (ver Co
 | Copia del modelo, primer arranque | 0,7 s | 1,8 s |
 | Copia/verificación, arranques siguientes | sin medir | 10 ms |
 | Carga del modelo | 1,2 s | ~2 s |
-| Tiempo por bloque de 100 ms, prom / máx (criterio: < 100 ms en el Motorola) | 7–9 / 33–89 ms | 26–28 / 91–97 ms (cumple, con poco margen en el máximo) |
+| Tiempo por bloque de 100 ms, prom / máx (criterio: < 100 ms en el Motorola) | 7–9 / 33–89 ms | 26–29 / 91–104 ms (el máximo superó una vez los 100 ms; el promedio sobra) |
 | Aciertos de "jervi"/"yervi" | Un fallo observado: Vosk reconoció "jer yer" y "vi" por separado | sin medir en detalle |
 | Frases trampa | sin medir | **"ayer vi" disparó una detección** |
 | `Vosk final: "yer"` | — | Aparece con otras palabras (no era la palabra clave) |

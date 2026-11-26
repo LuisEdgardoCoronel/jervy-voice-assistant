@@ -27,8 +27,27 @@
 
 ## Estado actual
 
-- **Último paso cerrado:** 1.2b.2b parte 1 — Vosk como motor real (`VoskKeywordSpotter`, `VoskModelLoader`, `VoskResultParser`), `TriggerableKeywordSpotter` para "Simular detección", `abiFilters` `arm64-v8a` y logs de tiempos en Info. Resultados parciales en `docs/spike-wake-word.md`: "jer vi" da activaciones falsas ("ayer vi").
-- **Próximo paso:** plan del renombre del asistente a **Halley** (pronunciado "jeili"; voz femenina): textos visibles, spec, gramática de Vosk y, según se decida, lo interno. Después, la parte 2 del 1.2b.2b.
+El asistente se renombra de **Jervy** a **Halley** (pronunciado "jeili", como el inglés "Hailey"; voz femenina) porque la palabra clave "jer vi" daba activaciones falsas en Vosk ("ayer vi"; ver `docs/spike-wake-word.md`).
+
+- **Último paso cerrado:** 1.2b.3a — renombre interno (opción C2): paquete y namespace `com.luiscoronel.halley`, **applicationId `com.luiscoronel.halley`** (es otra app para Android: hay que desinstalar Jervy, conceder permisos de nuevo y el modelo se copia a otra carpeta), clases `HalleyApplication`/`HalleyService`/`HalleyNotification`, `Theme.Halley`, `HalleyTheme`, tag de log `Halley`, canales `halley_service`/`halley_errors`, `rootProject.name` y grupo de tareas `halley`. El caché del modelo sigue en `~/.gradle/jervy-models/` (decisión: no volver a descargar). Los textos visibles **todavía dicen "Jervy"**: es el 3b.
+- **Próximo paso:** 1.2b.3b (plan acordado abajo). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
+
+### Acordado para el 1.2b.3b — lo visible, la spec y la gramática nueva
+**Textos (`strings.xml`):** `app_name` "Halley" y los 8 textos que dicen "Jervy" (canal "Servicio de Halley", "Halley está escuchando", "Halley está en pausa", "Halley está apagado/activo/en pausa", "Halley se detuvo").
+
+**Spec (este archivo):** título "CLAUDE.md — Halley"; Objetivo ("espera la palabra clave 'Halley'"); R2 (detección de "Halley"); ejemplos de R3–R8 ("Halley, pausa", "Halley, es todo por hoy", "Halley, ¿tengo notificaciones?", "Halley, mandale…", "Halley, llamá a mamá", "Halley, poné…"); corpus ("che Halley fijate si…"); "Máquina de estados" ("mientras Halley habla"); línea "Palabra clave" del Stack (pronunciación "jeili"; sin "jervi"/"yervi"); línea "Texto a voz" con **voz femenina**; el plan B ante activaciones falsas (no figura todavía en este archivo; va en el plan del 1.3) pasa a "Oye Halley". Las Decisiones viejas que dicen "Jervy" quedan como están (son historia); el historial de git no se toca.
+
+**Decisión a registrar:** "2026-11-25 — El asistente se llama Halley (pronunciado 'jeili', voz femenina); antes Jervy. — 'jer vi' en Vosk daba activaciones falsas con frases comunes ('ayer vi'): una palabra clave armada con dos palabras cortas y frecuentes es frágil. El TTS en español lee 'Halley' como 'alei': cuando Halley diga su nombre, el texto hablado se escribe 'Jeili'."
+
+**Gramática de Vosk (corrida de diagnóstico):** `["hailey","haley","hayley","halley","hey li","hey lee","hey ley","[unk]"]`.
+- Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei". Lo decide la prueba.
+- Se prefieren las variantes de una sola palabra; las de dos ("hey li"…) se incluyen solo para medirlas (mismo riesgo que "jer vi").
+- Después de 20 intentos se achica la gramática a las variantes que aparecen (el log dice cuál detectó).
+- Cambios en código: `VoskKeywordSpotter.KEYWORDS` y su KDoc; ejemplos de `VoskResultParserTest`.
+- Frases trampa: "hay ley", "ahí lee", "hay líos", "hey, listo", "jalea", "Leila", "Kelly", "Heidi"; más 10 min de música en inglés (mucho "hey").
+- Nota para el 1.2c: "Hailey" es un nombre inglés común; el modelo en inglés de sherpa-onnx podría andarle mejor.
+
+**Verificación:** `test`, `lint ktlintCheck`. Samsung: 20 × "jeili" a 30 cm y a 1 m contando qué variante detectó, frases trampa y 10 min de música. Motorola: 20 × en silencio y tiempo por bloque. Resultados a `docs/spike-wake-word.md`.
 
 ### Acordado para el 1.2b.2b
 **Parte 2:**
@@ -107,7 +126,7 @@ WakeWordDetector → SpeechToText → CommandParser → Action → Speaker
 - `:core` — **módulo Gradle Kotlin/JVM puro (sin dependencia del SDK de Android)**: interfaces de las etapas del pipeline (con `kotlinx-coroutines-core`), modelos de comando (`Command` sealed class), `CommandParser`, máquina de estados, normalización de texto. Totalmente testeable con JUnit y preparado para Kotlin Multiplatform a futuro. El resto (`audio/`, `actions/`, `system/`, `ui/`) son paquetes dentro del módulo `:app`, que depende de `:core`.
 - `audio/` — implementaciones de wake word, STT, TTS, audio focus, routing Bluetooth.
 - `actions/` — un archivo por comando (`ReadNotificationsAction`, `SendWhatsAppAction`, `CallContactAction`, `PlayMusicAction`, `MediaControlAction`, `StopAction`, `PauseAction`). Sumar un comando no toca el núcleo.
-- `system/` — `JervyService` (foreground service), `JervyNotificationListener`, repositorio de contactos, permisos.
+- `system/` — `HalleyService` (foreground service), `HalleyNotificationListener`, repositorio de contactos, permisos.
 - `ui/` — pantallas Compose.
 
 **Máquina de estados** (en `core/`, explícita):
@@ -122,7 +141,7 @@ El micrófono nunca escucha órdenes mientras Jervy habla.
   - **Corpus de frases:** `core/src/test/resources/frases.txt` con frases reales en español rioplatense ("mandale", "poneme", "che jervy fijate si…") y el comando esperado. Es la suite de regresión del parser; se amplía con cada frase que falle en la calle.
   - Lo que depende de Android se prueba a mano en el teléfono, con checklist en la revisión de cada paso.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- **Logs:** tag `Jervy`, con tiempos por etapa del pipeline (NF1) en nivel Info: algunos teléfonos (el Motorola) ocultan Debug.
+- **Logs:** tag `Halley`, con tiempos por etapa del pipeline (NF1) en nivel Info: algunos teléfonos (el Motorola) ocultan Debug.
 
 ### Comandos
 ```bash
@@ -130,7 +149,7 @@ El micrófono nunca escucha órdenes mientras Jervy habla.
 ./gradlew installDebug         # instalar en el teléfono conectado
 ./gradlew test                 # tests unitarios
 ./gradlew lint ktlintCheck     # lint
-adb logcat -s Jervy            # ver logs
+adb logcat -s Halley           # ver logs
 ```
 
 ## Roadmap v1 (cada etapa = 1 a 3 pasos; cerrar con prueba en la calle)
@@ -160,6 +179,7 @@ adb logcat -s Jervy            # ver logs
 - 2026-11-25 — Logs de tiempos en nivel Info, no Debug. — El Motorola filtra Debug (`log.tag=I`) y obligaba a cambiar una propiedad del sistema en cada prueba.
 - 2026-11-25 — "Simular detección" queda como herramienta de debug (solo builds debuggable), como decorador (`TriggerableKeywordSpotter`) sobre el motor real. — Permite probar el pipeline sin hablar; el motor real sigue recibiendo todo el audio. En release no existe.
 - 2026-11-25 — Solo ABI `arm64-v8a` (los dos teléfonos de prueba). Regla de lint `ChromeOsAbiSupport` desactivada. — Ahorra ~30 MB de librerías nativas de Vosk/JNA. Consecuencia: la app no corre en emuladores x86_64.
+- 2026-11-25 — Renombre interno completo a Halley, incluido el applicationId (`com.luiscoronel.halley`). — Es el momento más barato: después del onboarding (etapa 3) y con APKs compartidos, cambiar el ID obliga a reinstalar y reconfigurar todo. El caché del modelo conserva el nombre `jervy-models` para no volver a descargarlo.
 
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
@@ -174,6 +194,8 @@ adb logcat -s Jervy            # ver logs
 - Convention plugin (`build-logic/`) para la configuración compartida entre módulos (Java, ktlint), cuando haya más módulos que `:app` y `:core`.
 - `ktlintCheck` imprime `WARNING: sun.misc.Unsafe::objectFieldOffset has been called…`: viene del compilador de Kotlin que trae ktlint 1.8.0 corriendo sobre JDK 25 (daemon). No rompe nada; revisar al actualizar ktlint.
 - Si el servicio se cierra mientras se inicializan el TTS o el modelo, lo que ya se creó no se cierra (pérdida de memoria nativa hasta que muere el proceso). Revisar con la máquina de estados (etapa 2).
+- Etapa 8: renombrar el repo en GitHub (`jervy-voice-assistant`; GitHub redirige la URL vieja) y la carpeta local; actualizar el remote si hace falta y volver a abrir el proyecto en Android Studio. La memoria de Claude Code está guardada por la ruta de la carpeta: la de la ruta vieja queda huérfana.
+- Lint `AndroidGradlePluginVersion`: hay AGP 9.5.3 (usamos 9.5.2). Antes de actualizar, verificar que la última versión estable de Android Studio la soporte (ver Stack) y hacer el sync del IDE.
 - Bug: pausar mientras carga el modelo deja que el micrófono se abra ~60 ms después de la pausa (Motorola, 15:26:27.828 → 27.888). Hipótesis: la escucha arranca justo antes de la pausa y abrir el `AudioRecord` es una llamada bloqueante que no se interrumpe al cancelar; el micrófono se suelta recién en el primer chequeo del bucle. Revisar con la máquina de estados (etapa 2).
 - Si falla un "Hola" no se avisa: si el TTS falla siempre, Jervy queda sin voz y sin aviso. Revisar en la etapa 2.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.

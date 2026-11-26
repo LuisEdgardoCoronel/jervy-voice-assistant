@@ -16,13 +16,13 @@ ktlint {
 }
 
 android {
-    namespace = "com.luiscoronel.jervy"
+    namespace = "com.luiscoronel.halley"
     compileSdk {
         version = release(37) { minorApiLevel = 1 }
     }
 
     defaultConfig {
-        applicationId = "com.luiscoronel.jervy"
+        applicationId = "com.luiscoronel.halley"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
@@ -184,17 +184,18 @@ abstract class DownloadModelTask : DefaultTask() {
 
 val downloadVoskModel =
     tasks.register<DownloadModelTask>("downloadVoskModel") {
-        group = "jervy"
+        group = "halley"
         description = "Descarga y verifica el modelo de Vosk (español) para la palabra clave."
         url.set(libs.versions.voskModelUrl)
         sha256.set(libs.versions.voskModelSha256)
         assetPath.set("models/vosk-es")
+        // Nombre de la época de "Jervy": se mantiene para no volver a descargar el modelo.
         cacheDir.set(File(gradle.gradleUserHomeDir, "jervy-models"))
         offline.set(gradle.startParameter.isOffline)
     }
 
 tasks.register("downloadWakeWordModels") {
-    group = "jervy"
+    group = "halley"
     description = "Descarga y verifica todos los modelos de palabra clave."
     dependsOn(downloadVoskModel)
 }
