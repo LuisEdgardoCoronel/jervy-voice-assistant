@@ -19,6 +19,41 @@ object VoskResultParser {
             ?.trim()
             .orEmpty()
 
+    /** Una palabra del resultado final con `setWords(true)`: confianza 0–1 y tiempos en segundos. */
+    data class Word(
+        val word: String,
+        val conf: Float,
+        val start: Float,
+        val end: Float,
+    )
+
+    // Cada palabra es un objeto sin llaves adentro; el objeto de afuera no matchea porque las contiene.
+    private val WORD_OBJECT = Regex("""\{[^{}]*\}""")
+    private val WORD_FIELD = Regex(""""word"\s*:\s*"((?:[^"\\]|\\.)*)"""")
+
+    private fun number(
+        obj: String,
+        name: String,
+    ): Float? =
+        Regex(""""$name"\s*:\s*(-?[0-9.]+(?:[eE][-+]?[0-9]+)?)""")
+            .find(obj)
+            ?.groupValues
+            ?.get(1)
+            ?.toFloatOrNull()
+
+    /** Las palabras del arreglo `result` de un final. Las que no traen los cuatro campos se ignoran. */
+    fun words(json: String): List<Word> =
+        WORD_OBJECT
+            .findAll(json)
+            .mapNotNull { match ->
+                val obj = match.value
+                val word = WORD_FIELD.find(obj)?.groupValues?.get(1) ?: return@mapNotNull null
+                val conf = number(obj, "conf") ?: return@mapNotNull null
+                val start = number(obj, "start") ?: return@mapNotNull null
+                val end = number(obj, "end") ?: return@mapNotNull null
+                Word(word, conf, start, end)
+            }.toList()
+
     /**
      * La primera de [keywords] que aparece en [text] como palabras completas y seguidas,
      * ignorando `[unk]` entre medio. Null si no hay ninguna.

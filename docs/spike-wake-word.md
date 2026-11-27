@@ -210,3 +210,115 @@ Sobre el máximo en el Motorola, una hipótesis a confirmar: el modelo decodific
 Si sherpa no los cumple después de ajustar umbral y refuerzo, el siguiente paso es probar "HEY HAILEY" (`▁HE Y ▁HA IL E Y`).
 
 La medición completa va en el 1.2c.2: 20 × "jeili", las 8 frases trampa 5 veces cada una (marcadas con `adb shell log -t Halley "TRAMPA: …"`) y 10 min de música en inglés.
+
+## Comparación de palabras clave: "Morgana" y "HEY HAILEY" (rama `spike/wake-word`)
+
+**Pregunta:** antes de seguir ajustando "Hailey", ¿anda mejor "Morgana" (3 sílabas, pronunciación en español)? El nombre de la app se decide con estos resultados. Todo en el **Motorola**, a ~30 cm, fuente VOICE_RECOGNITION, 2026-11-27.
+
+**Preparación:**
+- **Vosk:** `morgana` está en el vocabulario de `vosk-model-small-es-0.42` como una sola palabra (tabla de 100.003 palabras extraída del modelo). También están `morgan`, `mañana`, `gana`, `ganas`, `ganamos`, `amor`, `órgano`, `órganos`, `organizamos`, `margarita`, `freeman` y `por`.
+- **sherpa:** tokens oficiales con `text2token` (mismo comando que en el 1.2c.1; control `HELLO WORLD` → `▁HE LL O ▁WORLD`): `MORGANA` → `▁MO R G AN A`; `HEY HAILEY` → `▁HE Y ▁HA IL E Y`; `MORGAN` → `▁MO R G AN` (prefijo exacto de la clave).
+- **Marcas:** un script (fuera del repo) escribe `adb shell log -t Halley "<RONDA>: INTENTOS | TRAMPA n | FIN"` cuando el usuario aprieta Enter. Las detecciones se asignan al tramo en que ocurren.
+
+**Frases trampa de ajuste para "Morgana"** (5 veces cada una). No se usan en la medición final, que lleva un juego nuevo:
+
+| # | Frase | Qué prueba |
+|---|---|---|
+| 1 | "Amor, ganamos el partido" | a-mor-ga-na-mos, casi la secuencia completa |
+| 2 | "Lo hice por ganas, no por plata" | "por ganas" |
+| 3 | "Mi hermano siempre me gana" | "me gana" |
+| 4 | "No tengo ganas de ir mañana" | "ganas" y "mañana" |
+| 5 | "Mañana organizamos el asado" | "or-ga-ni-…" |
+| 6 | "Pedime una margarita" | "mar-ga-…" |
+| 7 | "Hay que donar los órganos" | "ór-ga-nos" |
+| 8 | "Me encanta Morgan Freeman" | `▁MO R G AN`, prefijo de la clave |
+
+Para "HEY HAILEY" se usan las 8 trampas de "Halley" (1.2b.3b).
+
+### Resumen
+
+| Ronda | Motor y configuración | Aciertos | Falsas en trampas | Por bloque, prom / máx |
+|---|---|---|---|---|
+| A | Vosk, gramática `["morgana","[unk]"]`, detección sobre el parcial | 7 / 10 | **22 / 40**, más 7 dobles en silencio | 17–19 / 46–73 ms |
+| B | sherpa `▁MO R G AN A :1.0 #0.25` | 0 / 10 | 0 / 40 | 20–23 / 68–120 ms |
+| Escalera E1 | sherpa MORGANA `:2.0 #0.25` | 0 / 10 | 0 durante los intentos | 21–24 / 68–125 ms |
+| Escalera E1 | sherpa HEY HAILEY `:2.0 #0.25` | 1 / 10 (3 / 3 de cerca, máx −34 a −36 dBFS) | 0 durante los intentos | 21–27 / 87–125 ms |
+| Escalera E2 | sherpa MORGANA `:3.0 #0.25` | 0 / 10 | 0 durante los intentos | — |
+| D | Vosk, "morgana" + 10 distractoras, detección sobre el parcial | **10 / 10** | **7 / 40**, sin dobles | 26–29 / 79–138 ms |
+| E | Vosk, gramática de la D, detección sobre el final con confianza (umbral 0, calibración) | 9 / 10 | 6 / 40 con umbral 0 | 18–21 / 55–161 ms |
+
+Criterios: aciertos ≥ 18 / 20, trampas ≤ 2 / 40, máximo por bloque < 100 ms en el Motorola.
+
+### Ronda A — Vosk, "morgana" sola
+
+- La primera corrida se descartó: no tenía marcas y la sesión duró ~110 s.
+- **Dobles en silencio:** 7 detecciones entre 0,46 y 0,56 s después de reabrir el micrófono, con nivel de fondo (−54 a −70 dBFS). Suenan dos "hola" seguidos. Hipótesis: con una sola palabra en la gramática, el primer parcial después de `reset()` elige esa palabra aunque no haya voz.
+
+| # | Falsas con voz / 5 | Dobles en silencio |
+|---|---|---|
+| 1 | 2 | 2 |
+| 2 | 3 | — |
+| 3 | 2 | — |
+| 4 | 2 | — |
+| 5 | **5** | — |
+| 6 | 2 | 1 |
+| 7 | 3 | — |
+| 8 | 3 | 2 |
+| **Total** | **22 / 40** | 5 (más 2 durante los intentos) |
+
+### Ronda B y escalera — sherpa
+
+- El modelo carga en 3,4–3,8 s y lee `keywords.txt` sin error; el audio llega con nivel de voz (máx −41 a −47 dBFS).
+- **MORGANA:** 0 / 10 con refuerzo 1.0, 2.0 y 3.0. El modelo en inglés no lleva el "morgana" del usuario a esos tokens.
+- **HEY HAILEY :2.0:** 1 / 10 a 30 cm, pero 3 / 3 hablando cerca del teléfono. El nivel pesa mucho.
+- **Ninguna activación falsa** en ningún escalón.
+- El máximo por bloque supera los 100 ms en casi todas las sesiones.
+
+### Ronda D — Vosk con palabras distractoras
+
+Gramática `["morgana","morgan","mañana","gana","ganas","ganamos","amor","órgano","órganos","organizamos","margarita","[unk]"]`; solo `morgana` dispara. Vosk cargó la gramática completa, sin "Ignoring word missing in vocabulary".
+
+| # | Falsas / 5 (A → D) | A dónde se fue (`Vosk final`) |
+|---|---|---|
+| 1 | 2 → 0 | "amor ganamos" ×5 |
+| 2 | 3 → 2 | "órganos" ×3 |
+| 3 | 2 → 1 | "gana", "mañana", "amor"… |
+| 4 | 2 → 1 | "ganas mañana", "órgano mañana"… |
+| 5 | 5 → 0 | "mañana organizamos" ×5 |
+| 6 | 2 → 0 | "margarita" ×5 |
+| 7 | 3 → 0 | "órganos", "ganas órganos"… |
+| 8 | 3 → 3 | "morgan" ×2; las otras 3 dispararon |
+| **Total** | **22 → 7 / 40** | |
+
+- **Sin dobles en silencio:** ninguna detección antes de 1,4 s desde que se abre el micrófono.
+- **Más CPU:** el máximo por bloque sube a 79–138 ms y supera 100 en 10 de 17 ventanas.
+- **NF4:** con distractoras, `Vosk final` loguea esas palabras (solo las de la gramática). Es un build de debug; se revisa antes de un release.
+- **No se hizo D2** (sumar `freeman` y `por`), para no ajustar la gramática a medida de estas 8 frases.
+
+### Ronda E — Vosk, detección sobre el final con confianza por palabra
+
+- `setWords(true)`; detecta solo sobre el final si `morgana` tiene confianza ≥ `MIN_CONFIDENCE` (0 en esta corrida, para calibrar). El parcial ya no se consulta.
+- **Reloj:** los tiempos de las palabras cuentan desde que se creó el reconocedor; `reset()` no los reinicia. La latencia válida es la del reloj total.
+- **Latencia del final:** 700–940 ms desde que termina "morgana" (una de 1.820 ms en "morgana mañana", porque el final esperó a la segunda palabra). En la D la detección salía del parcial, mientras se hablaba: la E suma ~0,8 s antes del beep.
+
+**Confianza de cada "morgana":**
+
+| | Confianzas |
+|---|---|
+| Aciertos (9; los otros 2 finales de los intentos fueron "morgan" 0.86 y "órgano" 0.58) | 0.48, 0.54, 0.83, 0.85, 0.86, 0.89, 0.94, 0.95, 1.00 |
+| Falsas en trampas (6) | T1: 0.88, 0.48, 0.38, 0.94 · T2: 0.60 · T4: 0.93 ("morgana mañana") |
+
+**Con distintos umbrales** (calculado sobre el mismo log):
+
+| Umbral | Aciertos | Falsas / 40 |
+|---|---|---|
+| 0 | 9 / 10 | 6 |
+| 0.50 | 8 / 10 | 4 |
+| 0.70 | 7 / 10 | 3 |
+| 0.90 | 3 / 10 | 2 |
+
+- Por frase: T1 4, T2 1, T4 1; las demás 0. "Morgan Freeman" dio 0, contra 3 en la D; "Amor, ganamos" dio 4, contra 0 en la D. Con 5 repeticiones por frase, la variación entre rondas es grande; el total (6–7 / 40) es lo estable.
+- **La confianza no separa:** hay falsas con 0.93–0.94, como los mejores aciertos. Ningún umbral llega a ≤ 2 / 40 sin perder la mayoría de los aciertos.
+- Por bloque: prom 18–21 ms; máx 55–161 ms (supera 100 en 4 de 17 ventanas, con picos al calcular el final).
+
+**Conclusión parcial:** Vosk con distractoras baja las falsas de ~50 % a ~15–18 %, y la confianza por palabra no mejora eso. Queda lejos de ≤ 2 / 40. Sigue: el paso de los desbordes del AudioRecord y cerrar sherpa con HEY HAILEY bajando solo el umbral (0.15 y 0.10).
