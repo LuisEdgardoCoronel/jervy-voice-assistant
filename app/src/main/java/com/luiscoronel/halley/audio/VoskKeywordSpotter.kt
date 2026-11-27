@@ -56,8 +56,21 @@ class VoskKeywordSpotter private constructor(
         private const val TAG = "Halley"
 
         // Diagnóstico: las de una palabra son las preferidas; las de dos se miden (mismo riesgo que "jer vi").
-        val KEYWORDS = listOf("hailey", "haley", "hayley", "halley", "hey li", "hey lee", "hey ley")
-        private val GRAMMAR = (KEYWORDS + "[unk]").joinToString(",", "[", "]") { "\"$it\"" }
+        val KEYWORDS = listOf("morgana")
+        private val DISTRACTORS =
+            listOf(
+                "morgan",
+                "mañana",
+                "gana",
+                "ganas",
+                "ganamos",
+                "amor",
+                "órgano",
+                "órganos",
+                "organizamos",
+                "margarita",
+            )
+        private val GRAMMAR = (KEYWORDS + DISTRACTORS + "[unk]").joinToString(",", "[", "]") { "\"$it\"" }
 
         /** Crea el reconocedor sobre [model]. Si falla, cierra el modelo y lanza [ModelUnavailableException]. */
         fun create(
