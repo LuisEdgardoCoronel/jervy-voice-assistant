@@ -154,4 +154,59 @@ Tiempo por bloque en el Motorola: prom 19–29 ms; máx 175–196 ms en la prime
 
 ## sherpa-onnx (1.2c)
 
-_Pendiente._
+**Configuración (1.2c.1):**
+- Librería sherpa-onnx 2.0.3 (Apache 2.0), que trae ONNX Runtime (MIT).
+  - No está en un repositorio Maven verificado: el AAR (`sherpa-onnx-2.0.3.aar`, 52 MB) se baja de los releases de GitHub con la tarea `downloadSherpaAar`.
+  - El SHA-256 fijado es el que muestra GitHub, verificado en la descarga.
+  - Trae 4 ABIs; con `abiFilters` queda solo `arm64-v8a`.
+- Modelo `sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01`, solo inglés.
+  - Su README dice Apache 2.0. Está entrenado con GigaSpeech XL (10.000 h), ver el riesgo aceptado en `CLAUDE.md`.
+  - El archivo pesa 17,6 MB y su SHA-256 se calculó en la primera descarga.
+  - Se empaquetan solo encoder, decoder y joiner `int8` más `tokens.txt` (5,2 MB).
+- El modelo y las keywords se leen directo de assets con el `AssetManager`, sin copiarlos a disco.
+- Configuración del motor: 1 hilo, `max_active_paths` 4, `num_trailing_blanks` 1, 80 features a 16 kHz.
+- Selector de motor temporal: `./gradlew installDebug -PwakeEngine=sherpa|vosk`, por defecto `sherpa`. El log dice `Motor de palabra clave: …`.
+- **Tamaño del APK debug:** 85,2 MB (solo Vosk) → **122,1 MB** (Vosk + sherpa).
+  - Las `.so` van sin comprimir en el APK.
+  - ONNX Runtime ocupa 22 MB y sherpa 10,7 MB.
+
+**Palabra clave** (`app/src/main/assets/models/sherpa-kws-en/keywords.txt`):
+```
+▁HA IL E Y :1.0 #0.25 @HAILEY
+```
+- `:` es el refuerzo (más alto detecta más fácil y también da más falsas). `#` es el umbral (más alto es más exigente). `@` es el nombre que devuelve.
+- Las líneas sin `:` ni `#` usan `KEYWORDS_SCORE` (1.0) y `KEYWORDS_THRESHOLD` (0.25) de `SherpaKeywordSpotter`.
+- Para ajustarlos alcanza con editar el archivo y reinstalar.
+- **Cómo se generaron los tokens:** con la herramienta oficial, que corre en Python como herramienta de desarrollo y no forma parte del build.
+  - Entorno: Python 3.12.10, en un entorno virtual aparte con `pip install sherpa-onnx sentencepiece pypinyin click`. Instaló sherpa-onnx 2.0.3, sentencepiece 0.2.3 y pypinyin 0.55.0.
+  - Comando: `sherpa-onnx-cli text2token --tokens <modelo>/tokens.txt --tokens-type bpe --bpe-model <modelo>/bpe.model raw.txt out.txt`, con `raw.txt` = `HAILEY :1.0 #0.25 @HAILEY`.
+  - Salida: `▁HA IL E Y`.
+  - Control: la misma corrida da `▁HE LL O ▁WORLD` y `▁HE Y ▁S I RI`, iguales al `keywords.txt` de ejemplo del modelo.
+  - Para el plan B, la misma corrida da `HEY HAILEY` → `▁HE Y ▁HA IL E Y`. También `HAYLEY` → `▁HA Y LE Y`.
+  - **La deducción a mano estaba mal:** daba `▁HA I LE Y`. Sus 4 tokens existían en `tokens.txt`, pero el orden de fusión que supuse por el id no es el real. Se usa la salida oficial.
+
+**Logs de referencia:** `Modelo de sherpa-onnx cargado en X ms`, `Sherpa: "HAILEY" (tokens …)`, `Sherpa: bloque prom X ms, máx Y ms` (cada 10 s), `Palabra clave detectada: HAILEY`. sherpa no transcribe, así que no hay equivalente de `Vosk final` (NF4).
+
+**Humo (1.2c.1):**
+
+| Prueba | Samsung A34 | Motorola G22 |
+|---|---|---|
+| Carga del modelo | 1,26 s (en paralelo con el TTS, 0,83 s) | 3,83 s (TTS 1,76 s) |
+| Lee `keywords.txt` desde assets | Sí: el motor se creó sin error y detectó `HAILEY` con tokens `▁HA IL E Y` | Sí |
+| Detecta "jeili" | **2 / ~10** con refuerzo 1.0 y umbral 0.25 (valores por defecto). Los demás intentos se ven en el nivel (máx −36 a −42 dBFS), sin detección | **1 / ~10** con los mismos valores |
+| Tiempo por bloque, prom / máx | 10–12 / 43–76 ms | 21–29 / 82–134 ms (el máximo supera los 100 ms en 5 de 7 ventanas) |
+
+Sobre el máximo en el Motorola, una hipótesis a confirmar: el modelo decodifica por tramos de varios bloques (`chunk-16`). Así el costo se concentra en un bloque de cada pocos, y el promedio queda bajo (21–29 ms). Con un búfer de `AudioRecord` de 200 ms, un pico de 134 ms no pierde audio. Igual no cumple el criterio "máximo < 100 ms" tal como está escrito.
+
+**Criterios de aceptación (1.2c.2):**
+
+| Criterio | Umbral |
+|---|---|
+| Aciertos de "jeili" a 30 cm | ≥ 18 / 20 |
+| Activaciones con las frases trampa (8 × 5) | ≤ 2 / 40 |
+| Activaciones falsas en 10 min de música en inglés | ≤ 1 |
+| Tiempo por bloque en el Motorola | promedio < 50 ms y máximo < 100 ms |
+
+Si sherpa no los cumple después de ajustar umbral y refuerzo, el siguiente paso es probar "HEY HAILEY" (`▁HE Y ▁HA IL E Y`).
+
+La medición completa va en el 1.2c.2: 20 × "jeili", las 8 frases trampa 5 veces cada una (marcadas con `adb shell log -t Halley "TRAMPA: …"`) y 10 min de música en inglés.

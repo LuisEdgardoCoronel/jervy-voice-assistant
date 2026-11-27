@@ -25,9 +25,7 @@ class VoskKeywordSpotter private constructor(
     private val model: Model,
     private val recognizer: Recognizer,
 ) : KeywordSpotter {
-    private var blocks = 0
-    private var totalNanos = 0L
-    private var maxNanos = 0L
+    private val timer = BlockTimer()
 
     override fun accept(samples: ShortArray): String? {
         val startedAt = System.nanoTime()
@@ -39,7 +37,9 @@ class VoskKeywordSpotter private constructor(
             } else {
                 VoskResultParser.findKeyword(VoskResultParser.text(recognizer.partialResult), KEYWORDS)
             }
-        recordBlockTime(System.nanoTime() - startedAt)
+        timer.record(System.nanoTime() - startedAt)?.let {
+            Log.i(TAG, "Vosk: bloque prom ${it.averageMs} ms, máx ${it.maxMs} ms")
+        }
         return keyword
     }
 
@@ -52,23 +52,8 @@ class VoskKeywordSpotter private constructor(
         model.close()
     }
 
-    /** Tiempo de proceso por bloque de 100 ms, resumido cada [BLOCKS_PER_REPORT] bloques (NF1). */
-    private fun recordBlockTime(nanos: Long) {
-        blocks++
-        totalNanos += nanos
-        maxNanos = maxOf(maxNanos, nanos)
-        if (blocks == BLOCKS_PER_REPORT) {
-            Log.i(TAG, "Vosk: bloque prom ${totalNanos / blocks / NANOS_PER_MS} ms, máx ${maxNanos / NANOS_PER_MS} ms")
-            blocks = 0
-            totalNanos = 0
-            maxNanos = 0
-        }
-    }
-
     companion object {
         private const val TAG = "Halley"
-        private const val BLOCKS_PER_REPORT = 100
-        private const val NANOS_PER_MS = 1_000_000L
 
         // Diagnóstico: las de una palabra son las preferidas; las de dos se miden (mismo riesgo que "jer vi").
         val KEYWORDS = listOf("hailey", "haley", "hayley", "halley", "hey li", "hey lee", "hey ley")

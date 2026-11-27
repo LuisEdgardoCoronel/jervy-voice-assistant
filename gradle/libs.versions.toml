@@ -21,6 +21,15 @@ ktlint = "1.8.0"
 # Vosk no publica checksums: el SHA-256 se calculó en la primera descarga (HTTPS, sitio oficial) y queda fijado.
 voskModelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip"
 voskModelSha256 = "09b239888f633ef2f0b4e09736e3d9936acfd810bc65d53fad45261762c6511f"
+# sherpa-onnx (Apache 2.0; trae ONNX Runtime, MIT). No está en un repositorio Maven verificado: el AAR se baja
+# de los releases de GitHub (tarea downloadSherpaAar). SHA-256 = el digest que muestra GitHub, verificado en la descarga.
+sherpaOnnx = "2.0.3"
+sherpaOnnxAarUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.3/sherpa-onnx-2.0.3.aar"
+sherpaOnnxAarSha256 = "4c766e2e74c9d33d595338c21fe3b305c73ba45d47e96a235675c33142a2ec50"
+# Modelo KWS en inglés (README: Apache 2.0; entrenado con GigaSpeech, ver el riesgo aceptado en CLAUDE.md).
+# GitHub no publica su checksum en una página legible: el SHA-256 se calculó en la primera descarga (HTTPS) y queda fijado.
+sherpaKwsModelUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2"
+sherpaKwsModelSha256 = "f170013b4716e41b62b9bfd809687c207cef798ef9bc6534d524e17af9b6561a"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

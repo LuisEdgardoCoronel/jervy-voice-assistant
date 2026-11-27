@@ -29,8 +29,9 @@
 
 El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decisiones).
 
-- **Último paso cerrado:** cierre del diagnóstico del micrófono (1.2b.3c): la fuente queda fija en VOICE_RECOGNITION y se borraron `-PmicSource`, `buildConfig` y `MicSource`. `AudioLevel` se queda, con `flush()` para que cada detección deje el nivel de esa palabra (ver Pendientes). Diagnóstico: VOICE_RECOGNITION ≥ MIC en los dos teléfonos; la voz llega a niveles parecidos en ambos; los fallos son mitades sueltas de la clave ("hey", "li"). Detalle en `docs/spike-wake-word.md`. Falta el commit.
-- **Próximo paso:** frases trampa y música con la gramática actual. Después, achicar o ajustar la gramática (paso chico, a planear). Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
+- **Último paso cerrado:** 1.2c.1 — sherpa-onnx 2.0.3 con el modelo KWS en inglés y la palabra clave "HAILEY" (`assets/models/sherpa-kws-en/keywords.txt`), junto a Vosk con un selector temporal `-PwakeEngine=sherpa|vosk` (por defecto sherpa). `BlockTimer` es común a los dos motores. Tokens oficiales con `text2token`: `▁HA IL E Y` (la deducción a mano estaba mal). Humo: carga y detecta en los dos, pero con los valores por defecto acierta poco (Samsung 2/~10, Motorola 1/~10). En el Motorola, prom 21–29 ms y máx 82–134 ms por bloque. Falta el commit.
+- **Anterior:** Vosk con gramática quedó descartado por activaciones falsas: 17 de 40 frases trampa (~43 %) en el Samsung (ver `docs/spike-wake-word.md`). Antes de eso se cerró el diagnóstico del micrófono (VOICE_RECOGNITION fija).
+- **Próximo paso:** 1.2c.2 — medir sherpa (20 "jeili", 8 trampas × 5 marcadas con `adb shell log -t Halley`, 10 min de música en inglés, ms por bloque en los dos teléfonos) y ajustar umbral y refuerzo en `keywords.txt`, contra los criterios de aceptación del doc del spike. Si no los cumple: probar "HEY HAILEY"; después, plan B "Oye Halley". Al decidir el motor, se borra el que pierde junto con `-PwakeEngine` y `buildConfig`. Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 
 ### Datos para el ajuste de la gramática
 - Vocabulario del modelo (100.003 palabras, revisado): están `hailey`, `haley`, `hayley`, `halley`, `hey`, `ey`, `ei`, `jay`, `jai`, `li`, `lee`, `ley`, `lei`; **no** están `jeili`, `jei`, `jey`. El modelo chico no trae el diccionario de pronunciaciones (está compilado en el grafo): no se sabe si `hailey` suena "jeili" o "ailei", ni si `hey` suena "ei" o "jei".
@@ -171,6 +172,9 @@ adb logcat -s Halley           # ver logs
 - 2026-11-25 — Renombre interno completo a Halley, incluido el applicationId (`com.luiscoronel.halley`). — Es el momento más barato: después del onboarding (etapa 3) y con APKs compartidos, cambiar el ID obliga a reinstalar y reconfigurar todo. El caché del modelo conserva el nombre `jervy-models` para no volver a descargarlo.
 - 2026-11-25 — El asistente se llama Halley (pronunciado "jeili", voz femenina); antes Jervy. — "jer vi" en Vosk daba activaciones falsas con frases comunes ("ayer vi"): una palabra clave armada con dos palabras cortas y frecuentes es frágil. El TTS en español lee "Halley" como "alei": cuando Halley diga su nombre, el texto hablado se escribe "Jeili".
 
+- 2026-11-26 — Vosk con gramática restringida descartado para "Halley"/"jeili": 17 activaciones falsas en 40 frases trampa (~43 %). Vosk sin gramática tampoco: transcribiría y loguearía todo lo que se dice (NF4), y en el Motorola no alcanzaría la CPU. — Se prueba sherpa-onnx en inglés ("HAILEY"); plan B "Oye Halley".
+- 2026-11-26 — El AAR de sherpa-onnx se baja de los releases de GitHub con una tarea de Gradle (URL y SHA-256 fijados en `libs.versions.toml`, caché `~/.gradle/jervy-models/`) y entra como `files(...)`. — No hay un artefacto Maven verificado y no se commitean 52 MB. Consecuencia: Android Studio no ve las clases de sherpa hasta el primer build.
+
 ## Pendientes
 - v2: LLM con tool calling para lenguaje natural (con defensa contra inyección de prompts desde notificaciones; API key fuera del APK o configurada por el usuario).
 - v2: AccessibilityService como fallback (tocar "enviar" en WhatsApp, abrir listas en YouTube Music).
@@ -189,4 +193,5 @@ adb logcat -s Halley           # ver logs
 - Bug: pausar mientras carga el modelo deja que el micrófono se abra ~60 ms después de la pausa (Motorola, 15:26:27.828 → 27.888). Hipótesis: la escucha arranca justo antes de la pausa y abrir el `AudioRecord` es una llamada bloqueante que no se interrumpe al cancelar; el micrófono se suelta recién en el primer chequeo del bucle. Revisar con la máquina de estados (etapa 2).
 - Si falla un "Hola" no se avisa: si el TTS falla siempre, Halley queda sin voz y sin aviso. Revisar en la etapa 2.
 - Al cerrar el 1.3: revisar `AudioLevel` y sus logs de nivel (cada 5 s y al soltar el micrófono). Se dejaron para medir bolsillo y auto en el 1.3; decidir si quedan (¿solo en debug?) o se sacan.
+- Release con R8 (parte 2 del 1.2b.2b): el AAR de sherpa-onnx no trae reglas de ProGuard (`proguard.txt` vacío) y su código nativo crea objetos Kotlin (`KeywordSpotterResult`, configs): hacen falta reglas `-keep` para `com.k2fsa.sherpa.onnx.**`, además de las de Vosk/JNA.
 - Evaluar el pre-commit hook de ktlint (`./gradlew addKtlintCheckGitPreCommitHook`) para revisar el formato antes de cada commit.

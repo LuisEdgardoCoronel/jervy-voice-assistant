@@ -2,9 +2,11 @@ package com.luiscoronel.halley
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.util.Log
 import com.luiscoronel.halley.audio.AndroidSpeaker
 import com.luiscoronel.halley.audio.AudioRecordSource
 import com.luiscoronel.halley.audio.BeepPlayer
+import com.luiscoronel.halley.audio.SherpaKeywordSpotter
 import com.luiscoronel.halley.audio.VoskKeywordSpotter
 import com.luiscoronel.halley.audio.VoskModelLoader
 import com.luiscoronel.halley.core.pipeline.AudioSource
@@ -45,18 +47,29 @@ class AppContainer(
 
     fun createAudioSource(): AudioSource = AudioRecordSource(context)
 
-    /** Carga el modelo y crea el motor de Vosk. En builds debuggable lo envuelve con el disparador de debug. */
+    /**
+     * Carga el modelo y crea el motor elegido al compilar (`-PwakeEngine`, selector temporal del 1.2c).
+     * En builds debuggable lo envuelve con el disparador de debug.
+     */
     suspend fun createKeywordSpotter(): KeywordSpotter {
-        // Crear el reconocedor compila la gramática (código nativo): fuera del hilo principal.
-        val vosk =
+        Log.i(TAG, "Motor de palabra clave: ${BuildConfig.WAKE_ENGINE}")
+        // Cargar el modelo y crear el reconocedor es código nativo: fuera del hilo principal.
+        val engine =
             withContext(Dispatchers.IO) {
-                VoskKeywordSpotter.create(VoskModelLoader(context).load(), AudioRecordSource.SAMPLE_RATE)
+                when (BuildConfig.WAKE_ENGINE) {
+                    "vosk" -> VoskKeywordSpotter.create(VoskModelLoader(context).load(), AudioRecordSource.SAMPLE_RATE)
+                    else -> SherpaKeywordSpotter.create(context.assets)
+                }
             }
-        if (!debuggable) return vosk
-        return TriggerableKeywordSpotter(vosk).also { triggerable = it }
+        if (!debuggable) return engine
+        return TriggerableKeywordSpotter(engine).also { triggerable = it }
     }
 
     suspend fun createSpeaker(): AndroidSpeaker = AndroidSpeaker.create(context)
 
     fun createBeepPlayer(): BeepPlayer = BeepPlayer()
+
+    private companion object {
+        const val TAG = "Halley"
+    }
 }
