@@ -338,6 +338,35 @@ Gramática `["morgana","morgan","mañana","gana","ganas","ganamos","amor","órga
 
 **Conclusión parcial:** Vosk con distractoras baja las falsas de ~50 % a ~15–18 %, y la confianza por palabra no mejora eso. Queda lejos de ≤ 2 / 40. Sigue: el paso de los desbordes del AudioRecord y cerrar sherpa con HEY HAILEY bajando solo el umbral (0.15 y 0.10).
 
+## Desbordes del AudioRecord (rama `spike/wake-word`)
+
+**Pregunta:** cuando un bloque tarda más de 100 ms en el Motorola (pasa en casi todas las sesiones; hasta 161 ms en la E), ¿se pierde audio? El búfer del `AudioRecord` es `maxOf(minBuffer, 200 ms)`.
+
+**Medición** (`AudioDrift`, que se loguea desde `AudioRecordSource`): cada 5 s, junto al log de nivel, y al soltar el micrófono:
+```
+Mic: audio 5.00 s en 5.01 s de reloj, atraso mín 12 ms, máx 180 ms, pendiente HW máx 170 de 200 ms
+```
+- **audio / reloj:** el audio leído y el reloj monotónico, los dos contados desde `startRecording()`.
+- **atraso** = reloj − audio leído.
+  - El mínimo del período es la base: la latencia de arranque.
+  - El máximo muestra cuánto se acumuló mientras el motor tardaba.
+  - **Si se pierde audio, el mínimo sube de un período al siguiente y no vuelve a bajar.**
+- **pendiente HW** = muestras capturadas por el hardware (`AudioRecord.getTimestamp`, extrapolado hasta el momento de la lectura) − muestras leídas.
+  - Si pasa el tamaño del búfer, la línea termina en `— DESBORDE`.
+  - Si el teléfono no da el timestamp, la línea dice `sin datos` y queda solo el atraso.
+- La deriva entre el reloj del micrófono y el del teléfono suma unos pocos ms por minuto: no se confunde con un desborde, que salta de golpe 100 ms o más.
+
+**Resultados:**
+
+| Prueba | Motorola G22 | Samsung A34 |
+|---|---|---|
+| Tamaño del búfer (`pendiente HW … de N ms`) | | |
+| `getTimestamp` disponible | | |
+| Sesión de 5–10 min con sherpa, voz y silencio: base del atraso al principio → al final | | |
+| Atraso máx / pendiente HW máx | | |
+| Bloque máx en la misma sesión (`Sherpa: bloque …`) | | |
+| Desbordes | | |
+
 ## Herramientas del spike (desarrollo, no del build)
 
 **`tools/ronda.sh` — marcas de una ronda en el log.** Corre en Git Bash con el teléfono conectado. Escribe `adb shell log -t Halley "<etiqueta>: INTENTOS | TRAMPA n | FIN"` cada vez que el usuario aprieta Enter, y le muestra qué decir. Solo escribe en logcat; no toca nada más del teléfono.
