@@ -198,27 +198,42 @@ Tiempo por bloque en el Motorola: prom 19–29 ms; máx 175–196 ms en la prime
 
 Sobre el máximo en el Motorola, una hipótesis a confirmar: el modelo decodifica por tramos de varios bloques (`chunk-16`). Así el costo se concentra en un bloque de cada pocos, y el promedio queda bajo (21–29 ms). Con un búfer de `AudioRecord` de 200 ms, un pico de 134 ms no pierde audio. Igual no cumple el criterio "máximo < 100 ms" tal como está escrito.
 
-**Criterios de aceptación (1.2c.2):**
+**Criterios de aceptación (revisados el 2026-11-27):**
 
 | Criterio | Umbral |
 |---|---|
-| Aciertos de "jeili" a 30 cm | ≥ 18 / 20 |
-| Activaciones con las frases trampa (8 × 5) | ≤ 2 / 40 |
-| Activaciones falsas en 10 min de música en inglés | ≤ 1 |
-| Tiempo por bloque en el Motorola | promedio < 50 ms y máximo < 100 ms |
+| Aciertos de la palabra clave a ~30 cm, pronunciación natural | ≥ 18 / 20 |
+| Activaciones falsas en 30 min de audio real: 10 de música en inglés, 10 de podcast en español y 10 de radio en español o en el auto | ≤ 2 por hora (≤ 1 en los 30 min) |
+| Frases trampa nuevas (8 × 5, que no se hayan usado para ajustar) | Referencia, sin umbral: se informan por frase |
+| Tiempo por bloque en el Motorola | promedio < 50 ms; el máximo se revisa con el paso de los desbordes del AudioRecord |
+
+**Por qué se cambió el criterio de falsas:**
+- **Una activación falsa no ejecuta nada.** Halley hace beep, dice "no entendí" y vuelve a escuchar (R9). Además, toda acción con efecto pide confirmación verbal (NF5).
+- **Lo que importa es el uso real.** Cuenta cuántas veces molesta en el uso real, no cuánto resiste frases armadas para engañarlo.
+- **Las trampas siguen como referencia.** Las 40 trampas son adversarias a propósito: sirven para comparar motores, pero son un umbral demasiado exigente para decidir.
+- **Por qué 30 minutos de audio.** Con 20 minutos, "≤ 2 por hora" equivaldría a 0 falsas, porque una sola daría 3 por hora. Con 30 minutos, una falsa da justo 2 por hora.
+
+**Criterios anteriores (1.2c.1, reemplazados):**
+- trampas ≤ 2 / 40;
+- 10 min de música en inglés ≤ 1 falsa;
+- máximo por bloque < 100 ms.
 
 Si sherpa no los cumple después de ajustar umbral y refuerzo, el siguiente paso es probar "HEY HAILEY" (`▁HE Y ▁HA IL E Y`).
 
-La medición completa va en el 1.2c.2: 20 × "jeili", las 8 frases trampa 5 veces cada una (marcadas con `adb shell log -t Halley "TRAMPA: …"`) y 10 min de música en inglés.
+**La medición final se hace en los dos teléfonos**, con Vosk D y con la mejor configuración de sherpa. Incluye:
+- 20 intentos a ~30 cm;
+- los 30 min de audio real;
+- las 8 frases trampa nuevas, 5 veces cada una, marcadas con `tools/ronda.sh`;
+- el tiempo por bloque.
 
 ## Comparación de palabras clave: "Morgana" y "HEY HAILEY" (rama `spike/wake-word`)
 
 **Pregunta:** antes de seguir ajustando "Hailey", ¿anda mejor "Morgana" (3 sílabas, pronunciación en español)? El nombre de la app se decide con estos resultados. Todo en el **Motorola**, a ~30 cm, fuente VOICE_RECOGNITION, 2026-11-27.
 
 **Preparación:**
-- **Vosk:** `morgana` está en el vocabulario de `vosk-model-small-es-0.42` como una sola palabra (tabla de 100.003 palabras extraída del modelo). También están `morgan`, `mañana`, `gana`, `ganas`, `ganamos`, `amor`, `órgano`, `órganos`, `organizamos`, `margarita`, `freeman` y `por`.
+- **Vosk:** `morgana` está en el vocabulario de `vosk-model-small-es-0.42` como una sola palabra (tabla de 100.003 palabras extraída del modelo con `tools/SymTab.java`, ver "Herramientas del spike"). También están `morgan`, `mañana`, `gana`, `ganas`, `ganamos`, `amor`, `órgano`, `órganos`, `organizamos`, `margarita`, `freeman` y `por`.
 - **sherpa:** tokens oficiales con `text2token` (mismo comando que en el 1.2c.1; control `HELLO WORLD` → `▁HE LL O ▁WORLD`): `MORGANA` → `▁MO R G AN A`; `HEY HAILEY` → `▁HE Y ▁HA IL E Y`; `MORGAN` → `▁MO R G AN` (prefijo exacto de la clave).
-- **Marcas:** un script (fuera del repo) escribe `adb shell log -t Halley "<RONDA>: INTENTOS | TRAMPA n | FIN"` cuando el usuario aprieta Enter. Las detecciones se asignan al tramo en que ocurren.
+- **Marcas:** `tools/ronda.sh` (ver "Herramientas del spike") escribe `adb shell log -t Halley "<RONDA>: INTENTOS | TRAMPA n | FIN"` cuando el usuario aprieta Enter. Las detecciones se asignan al tramo en que ocurren.
 
 **Frases trampa de ajuste para "Morgana"** (5 veces cada una). No se usan en la medición final, que lleva un juego nuevo:
 
@@ -322,3 +337,36 @@ Gramática `["morgana","morgan","mañana","gana","ganas","ganamos","amor","órga
 - Por bloque: prom 18–21 ms; máx 55–161 ms (supera 100 en 4 de 17 ventanas, con picos al calcular el final).
 
 **Conclusión parcial:** Vosk con distractoras baja las falsas de ~50 % a ~15–18 %, y la confianza por palabra no mejora eso. Queda lejos de ≤ 2 / 40. Sigue: el paso de los desbordes del AudioRecord y cerrar sherpa con HEY HAILEY bajando solo el umbral (0.15 y 0.10).
+
+## Herramientas del spike (desarrollo, no del build)
+
+**`tools/ronda.sh` — marcas de una ronda en el log.** Corre en Git Bash con el teléfono conectado. Escribe `adb shell log -t Halley "<etiqueta>: INTENTOS | TRAMPA n | FIN"` cada vez que el usuario aprieta Enter, y le muestra qué decir. Solo escribe en logcat; no toca nada más del teléfono.
+```bash
+bash tools/ronda.sh ZT3229NHLB morgana "RONDA D"            # 10 intentos + 8 trampas de Morgana
+bash tools/ronda.sh ZT3229NHLB hailey "E3 HEY HAILEY" intentos  # solo 10 intentos ("hey jeili")
+```
+- Seriales: Motorola `ZT3229NHLB`, Samsung `RFCW91LFNTV`.
+- Conjuntos: `morgana` (trampas de ajuste de Morgana) y `hailey` (trampas de "Halley", 1.2b.3b).
+- Activar Halley y esperar ~5 s (o ver `Micrófono abierto` en el log) **antes** de correrlo: Halley no habla al arrancar, solo al detectar.
+- El log se captura aparte: `adb -s <serial> logcat -v time -s Halley -T "<fecha del teléfono>" > archivo.log` (la fecha sale de `adb shell date +"%m-%d %H:%M:%S.000"`). Las detecciones se asignan al tramo entre dos marcas.
+
+**Vocabulario de Vosk (`tools/SymTab.java`).** El modelo chico no trae `words.txt`: las palabras están en la tabla de símbolos embebida en `graph/Gr.fst`. Para recrear la lista (100.003 palabras, `vosk-model-small-es-0.42`):
+```bash
+mkdir -p /tmp/vosk && cd /tmp/vosk
+unzip -q ~/.gradle/jervy-models/<sha256 del modelo de Vosk>.zip   # el que descarga downloadVoskModel
+java <repo>/tools/SymTab.java vosk-model-small-es-0.42/graph/Gr.fst symtab.tsv   # imprime simbolos=100003
+cut -f2 symtab.tsv > words.txt
+grep -c "^morgana$" words.txt   # 1 = está como una sola palabra
+```
+`SymTab` busca en el binario los registros "largo int32 + palabra UTF-8 + clave int64". Es una heurística, pero da exactamente 100.003 símbolos (claves 0–100.005). Para buscar palabras con tilde, usar `words.txt` (en UTF-8), no la consola de Windows.
+
+**Tokens de sherpa (`text2token`).** Entorno de Python aparte, fuera del repo:
+- Python 3.12 (en esta PC: `C:\Users\Edgardo\AppData\Local\Programs\Python\Python312`, que no está en el PATH de Git Bash).
+- `python -m venv venv-text2token` y `venv-text2token/Scripts/pip install sherpa-onnx==2.0.3 sentencepiece==0.2.3 pypinyin==0.55.0 click`. Versiones usadas: `click` 8.5.1, `sherpa-onnx-core` 2.0.3.
+- Modelo: el `.tar.bz2` de `~/.gradle/jervy-models/` (`sherpaKwsModelSha256`) extraído en una carpeta propia. Hace falta `bpe.model`, que no se empaqueta en el APK.
+```bash
+printf 'MORGANA\nHEY HAILEY\nHELLO WORLD\n' > raw.txt
+venv-text2token/Scripts/sherpa-onnx-cli.exe text2token \
+  --tokens "$M/tokens.txt" --tokens-type bpe --bpe-model "$M/bpe.model" raw.txt out.txt
+cat out.txt   # HELLO WORLD → ▁HE LL O ▁WORLD es el control
+```
