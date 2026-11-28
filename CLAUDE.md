@@ -38,12 +38,63 @@ El asistente se llama **Halley** (pronunciado "jeili"; antes Jervy, ver Decision
     - B y escalera sherpa: MORGANA 0/10 con refuerzo 1.0, 2.0 y 3.0; HEY HAILEY con refuerzo 2.0, 1/10 a 30 cm (3/3 de cerca). Sherpa no tuvo ninguna falsa.
     - **D: Vosk "morgana" con 10 distractoras, detección sobre el parcial: 10/10 y 7/40. Es la mejor configuración de Vosk.**
     - E: Vosk sobre el final con confianza por palabra: descartada (la confianza no separa las trampas y suma ~0,8 s de latencia).
-  - **Estado de la rama:** el código de Vosk que quedó es el de la E (detección sobre el final). Para medir la D hay que volver a su detección, la del commit `116a1ec` (sobre el parcial, misma gramática). `keywords.txt` quedó en `▁MO R G AN A :3.0 #0.25 @MORGANA`, del último escalón.
+  - **Estado de la rama:** el código de Vosk que quedó es el de la E (detección sobre el final). Para medir la D hay que volver a su detección, la del commit `116a1ec` (sobre el parcial, misma gramática). `keywords.txt` quedó en `▁MO R G AN A :3.0 #0.10 @MORGANA`, del E6. Con Vosk no se usa.
 - **Próximos pasos, en este orden:**
   1. ~~Revisar el criterio de falsas~~ — **aprobado y aplicado (2026-11-27)** en "Criterios de aceptación" del doc del spike: falsas en 30 min de audio real (10 de música en inglés, 10 de podcast en español, 10 de radio o auto), ≤ 2 por hora (≤ 1 en los 30 min); las frases trampa nuevas son referencia, sin umbral; el máximo por bloque se revisa con el paso 2.
   2. ~~Desbordes del AudioRecord~~ — **cerrado (2026-11-27)**. En el Motorola con sherpa, en 10 min y 4 aperturas del micrófono, no se perdió audio: 0 desbordes, la base del atraso quedó estable y el pendiente del hardware llegó como máximo a 56 de 200 ms, con bloques de hasta 125 ms. El criterio "máximo < 100 ms" pasa a ser "sin pérdida de audio y promedio < 50 ms". Vosk E no se midió (decisión del usuario). La medición queda en el código (`AudioDrift`, log `Mic: audio … de reloj, atraso …, pendiente HW …`) y se decide junto con `AudioLevel` al cerrar el 1.3. Detalle en la sección "Desbordes del AudioRecord" del doc del spike.
-  3. **Cerrar sherpa bajando solo el umbral, con HEY HAILEY y con MORGANA** (MORGANA se sumó porque detectó 2 veces con `:3.0 #0.25` durante la prueba de desbordes). Escalones `#0.15` y `#0.10`, 10 intentos cada uno. HEY HAILEY va con el refuerzo 2.0 ya medido. Si una llega a 8/10, se hacen sus trampas. **Plan aprobado (2026-11-27):** MORGANA con refuerzo 3.0; se alternan las claves (E3 HEY HAILEY #0.15 → E4 MORGANA #0.15 → E5 HEY HAILEY #0.10 → E6 MORGANA #0.10); si una llega a ≥ 8/10 con 0.15, se saltea su 0.10 y se hacen sus trampas con 0.15. Escalones en la sección "Escalera de umbral" del doc del spike. **E3: 0/10** (sin falsas). El control positivo con la voz en inglés del Traductor sí detectó: la integración anda, pero el modelo no reconoce la pronunciación rioplatense. **HEY HAILEY descartado: el E5 no se hace.** **E4 (MORGANA `:3.0 #0.15`): 0/10. E6 (`#0.10`): 2/10.** Sin falsas en ningún escalón. **Escalera cerrada: sherpa no cumple con la pronunciación natural; la medición final se hace solo con Vosk D.**
-  4. **Medición final** con Vosk D y la mejor configuración de sherpa: 20 intentos a ~30 cm, falsas en los 30 min de audio real (criterio revisado), un juego nuevo de 8 frases trampa que no se haya usado para ajustar (Claude lo propone en ese momento) y tiempo por bloque, en los dos teléfonos.
+  3. ~~Cerrar sherpa bajando el umbral~~ — **cerrado (2026-11-27)**. Resultados en el Motorola:
+     - HEY HAILEY `:2.0 #0.15`: 0/10. El control positivo con la voz en inglés del Traductor sí detectó, pero el modelo no reconoce la pronunciación rioplatense. Quedó descartado y el E5 no se hizo.
+     - MORGANA `:3.0`: 0/10 con `#0.15` y 2/10 con `#0.10`.
+     - Sin falsas en ningún escalón. **Sherpa no cumple: la medición final se hace solo con Vosk D.** Detalle en "Escalera de umbral" del doc del spike.
+  4. **Medición final con Vosk D. Plan propuesto (2026-11-27); el usuario lo aprueba al empezar la sesión siguiente.** Claude no edita nada hasta tener ese OK, y lo primero es avisar de las decisiones abiertas de más abajo.
+     - **Qué y por qué (R2):** medir Vosk D contra los criterios de aceptación revisados (ver "Criterios de aceptación" en el doc del spike) para decidir el motor y el nombre (Morgana) en el paso 5.
+     - **Preparación (un cambio, que el usuario commitea antes de medir):**
+       - `VoskKeywordSpotter.kt` vuelve exactamente al del commit `116a1ec` con `git restore --source 116a1ec -- app/src/main/java/com/luiscoronel/halley/audio/VoskKeywordSpotter.kt`. Eso deja la detección sobre el parcial (y sobre el final si el parcial no la mostró), la misma gramática de 10 distractoras y sin `setWords`. El comando no toca el historial, solo el archivo de trabajo.
+       - `VoskResultParser.words()` y sus tests (de la ronda E) quedan sin uso pero no molestan. Se borran al pasar a `main`.
+       - `tools/ronda.sh` suma dos conjuntos:
+         - `final`: clave "morgana", **20 intentos** y las 8 trampas nuevas de abajo × 5.
+         - `audio`: solo marca los tramos `MÚSICA`, `PODCAST`, `RADIO` y `FIN` con Enter.
+         - El número de intentos pasa a depender del conjunto (10 en los de ajuste, 20 en `final`).
+       - Se compila e instala con `./gradlew installDebug -PwakeEngine=vosk`. El log tiene que decir `Motor de palabra clave: vosk` y Vosk tiene que cargar la gramática sin "Ignoring word missing in vocabulary".
+     - **Frases trampa nuevas** (5 veces cada una; ninguna se usó para ajustar). Se buscaron sonidos que **no** están entre las distractoras, para no medir solo lo que la gramática ya absorbe:
+
+       | # | Frase | Qué prueba |
+       |---|---|---|
+       | 1 | "Mi amor, ganaste" | a-mor-ga-nas-te; "ganaste" no es distractora |
+       | 2 | "Mora y Ana vienen mañana" | "mo-ra-ya-na", casi "morgana" sin la g |
+       | 3 | "Se llama Morena" | "mo-re-na", 3 sílabas con el mismo arranque |
+       | 4 | "Mariana ganó ayer" | "ma-ria-na ga-nó" |
+       | 5 | "La morgue está cerrada" | "mor-g…", el arranque exacto |
+       | 6 | "Vamos a morfar algo" | "mor-f…", rioplatense |
+       | 7 | "Me organicé bien" | "or-ga-ni-cé"; "organizamos" es distractora y esta no |
+       | 8 | "Una mortadela, por favor" | "mor-ta-…" |
+     - **Orden** (con el "Protocolo de cada ronda" de más arriba):
+       1. **Motorola (`ZT3229NHLB`):** `bash tools/ronda.sh ZT3229NHLB final "FINAL VOSK D"`, con 20 intentos a ~30 cm y las 8 trampas × 5.
+       2. **Motorola, 30 min de audio real:** `bash tools/ronda.sh ZT3229NHLB audio "AUDIO VOSK D"`, con 10 min de música en inglés, 10 de podcast en español y 10 de radio en español (o en el auto). Nadie habla durante los tramos. Cada "hola" de Halley es una falsa.
+       3. **Samsung (`RFCW91LFNTV`):** `bash tools/ronda.sh RFCW91LFNTV final "FINAL VOSK D"`, con 20 intentos y las 8 trampas × 5. El audio real no se mide en el Samsung, por decisión del usuario.
+       - Antes de cada tramo Claude avisa el teléfono y la configuración, instala y graba el log con `-T` y la fecha del teléfono. **Al terminar cada tramo, Claude corta la captura del log.**
+       - El usuario activa Halley y espera a ver `Micrófono abierto` (unos 5 s, o 10 s si el modelo carga en frío) **antes** de correr el script. En el E6 la marca quedó antes de que se abriera el micrófono.
+     - **Qué se anota en el doc del spike** (sección nueva "Medición final — Vosk D"):
+       - aciertos sobre 20, por teléfono;
+       - falsas y dobles en los intentos;
+       - falsas por trampa y lo que salió en `Vosk final`;
+       - falsas por tramo de audio real, con hora y `Vosk final`;
+       - promedio y máximo por bloque;
+       - pérdida de audio (`AudioDrift`): base del atraso, pendiente máximo y desbordes.
+     - **Criterios:**
+       - aciertos ≥ 18/20 en cada teléfono;
+       - audio real ≤ 1 falsa en los 30 min (≤ 2 por hora);
+       - trampas: referencia, sin umbral;
+       - en el Motorola, sin pérdida de audio y promedio por bloque < 50 ms (en la D fue 26–29 ms).
+     - **Verificación:** el conteo sale del log entre marcas. Al cerrar, `./gradlew test lint ktlintCheck` y la revisión del paso.
+     - **Decisiones abiertas (confirmar al empezar):**
+       1. **Fuente del audio real.** Propuesta: un parlante externo (la PC) a ~1 m del teléfono, a volumen de conversación, con Halley escuchando por el micrófono del teléfono. Si la música sale del mismo teléfono, el cancelador de eco (AEC) cambia el caso; eso queda para NF6.
+       2. **Las 8 frases trampa** de arriba: cambiar las que no suenen naturales.
+       3. **Si Vosk D no cumple:** frenar y traer opciones (plan B "Oye Halley", openWakeWord) sin ajustar la gramática a medida de estas frases.
+     - **Riesgos:**
+       - La sesión dura más de una hora. El Motorola tiene que estar enchufado por USB.
+       - Con la pantalla apagada, la gestión de batería no debería cortar el servicio en primer plano, pero si se corta se ve en el log.
+       - `Vosk final` loguea las palabras de la gramática (NF4, aceptado en debug).
   5. Con eso se decide el motor y el nombre. Se pasa a `main` en un paso aparte y se borra el motor que pierde junto con `-PwakeEngine` y `buildConfig`. Si ninguno cumple: plan B "Oye Halley"; openWakeWord queda como última opción. Después, la parte 2 del 1.2b.2b. El renombre del repo y de la carpeta quedó para la etapa 8 (ver Pendientes).
 - **Anterior:** Vosk con la gramática de "Halley" quedó descartado por 17/40 falsas (~43 %) en el Samsung. Antes se cerró el diagnóstico del micrófono (VOICE_RECOGNITION fija).
 
