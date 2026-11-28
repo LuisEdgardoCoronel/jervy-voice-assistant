@@ -349,6 +349,7 @@ Cada escalón son 10 intentos a ~30 cm en el Motorola, marcados con `tools/ronda
 |---|---|---|---|---|---|
 | E3 (21:52:07–21:52:45) | `▁HE Y ▁HA IL E Y :2.0 #0.15 @HEY_HAILEY` | **0 / 10** | 0 / 0 | −39 a −45 dBFS | 28–31 / 110–141 ms |
 | E4 (22:13:14–22:14:06) | `▁MO R G AN A :3.0 #0.15 @MORGANA` | **0 / 10** | 0 / 0 | −37 a −44 dBFS | 27–30 / 106–164 ms |
+| E6 (22:27:02–22:27:58) | `▁MO R G AN A :3.0 #0.10 @MORGANA` | **2 / 10** | 0 / 0 | −37 a −47 dBFS | 27–29 / 101–135 ms |
 
 - **E3:**
   - Ninguna detección, aunque la voz llegó con nivel normal: −39 a −45 dBFS, como en los escalones anteriores.
@@ -369,6 +370,16 @@ Cada escalón son 10 intentos a ~30 cm en el Motorola, marcados con `tools/ronda
   - Las 2 detecciones de MORGANA durante la prueba de desbordes (con `#0.25`) no se repitieron con un umbral más permisivo: parecen casuales.
   - "Simular detección" respondió al primer toque, con el micrófono abierto y esperando la palabra clave. El toque cerró y reabrió el micrófono sin errores.
   - No hubo pérdida de audio: la base del atraso quedó en 71–73 ms y el pendiente máximo fue 56 de 200 ms. El bloque máximo fue de 164 ms, el más alto medido con sherpa, y aun así no desbordó.
+- **E6:**
+  - Hubo 2 detecciones seguidas (22:27:10 y 22:27:13), las dos con voz en ese tramo: máx −39 y −45 dBFS. La segunda llegó 1,7 s después de reabrir el micrófono. No hubo más detecciones en los ~38 s restantes.
+  - La marca `INTENTOS` (22:27:02.996) quedó antes de que el micrófono se abriera (22:27:04.102), porque el script se corrió apenas se activó Halley. Si el primer "morgana" se dijo en ese segundo, se perdió. Igual no cambia la conclusión: serían como mucho 2 de 9.
+  - El "hola" respondió a 1,6 s de la detección la primera vez (TTS en frío) y a 1,1 s la segunda.
+  - No hubo pérdida de audio: base del atraso de 72–75 ms y pendiente máximo 12 de 200 ms.
+
+**Conclusión de la escalera:**
+- **sherpa no cumple con la pronunciación natural del usuario.** Con el umbral en 0.10, el mínimo que se probó, MORGANA llega a 2/10. Con 0.25 había dado 0/10, y con 0.15 también 0/10. HEY HAILEY dio 0/10 con 0.15 y quedó descartado.
+- **En ningún escalón hubo activaciones falsas,** pero sin aciertos eso no sirve.
+- **La medición final se hace solo con Vosk D** ("morgana" con distractoras, detección sobre el parcial).
 
 ## Desbordes del AudioRecord (rama `spike/wake-word`)
 
