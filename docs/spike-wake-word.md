@@ -205,7 +205,7 @@ Sobre el máximo en el Motorola, una hipótesis a confirmar: el modelo decodific
 | Aciertos de la palabra clave a ~30 cm, pronunciación natural | ≥ 18 / 20 |
 | Activaciones falsas en 30 min de audio real: 10 de música en inglés, 10 de podcast en español y 10 de radio en español o en el auto | ≤ 2 por hora (≤ 1 en los 30 min) |
 | Frases trampa nuevas (8 × 5, que no se hayan usado para ajustar) | Referencia, sin umbral: se informan por frase |
-| Tiempo por bloque en el Motorola | promedio < 50 ms; el máximo se revisa con el paso de los desbordes del AudioRecord |
+| Tiempo por bloque en el Motorola | sin pérdida de audio (0 desbordes, base del atraso estable; ver "Desbordes del AudioRecord") y promedio < 50 ms |
 
 **Por qué se cambió el criterio de falsas:**
 - **Una activación falsa no ejecuta nada.** Halley hace beep, dice "no entendí" y vuelve a escuchar (R9). Además, toda acción con efecto pide confirmación verbal (NF5).
@@ -216,7 +216,7 @@ Sobre el máximo en el Motorola, una hipótesis a confirmar: el modelo decodific
 **Criterios anteriores (1.2c.1, reemplazados):**
 - trampas ≤ 2 / 40;
 - 10 min de música en inglés ≤ 1 falsa;
-- máximo por bloque < 100 ms.
+- máximo por bloque < 100 ms (reemplazado el 2026-11-27, después de medir los desbordes).
 
 Si sherpa no los cumple después de ajustar umbral y refuerzo, el siguiente paso es probar "HEY HAILEY" (`▁HE Y ▁HA IL E Y`).
 
@@ -356,16 +356,28 @@ Mic: audio 5.00 s en 5.01 s de reloj, atraso mín 12 ms, máx 180 ms, pendiente 
   - Si el teléfono no da el timestamp, la línea dice `sin datos` y queda solo el atraso.
 - La deriva entre el reloj del micrófono y el del teléfono suma unos pocos ms por minuto: no se confunde con un desborde, que salta de golpe 100 ms o más.
 
-**Resultados:**
+**Resultados (Motorola, 2026-11-27, 21:10:37–21:20:38).** Sesión de 10 min con sherpa (`▁MO R G AN A :3.0 #0.25`), con voz y silencio, 4 aperturas del micrófono. En el Samsung no se midió: es el teléfono con menos carga y el Motorola ya da el peor caso.
 
-| Prueba | Motorola G22 | Samsung A34 |
-|---|---|---|
-| Tamaño del búfer (`pendiente HW … de N ms`) | | |
-| `getTimestamp` disponible | | |
-| Sesión de 5–10 min con sherpa, voz y silencio: base del atraso al principio → al final | | |
-| Atraso máx / pendiente HW máx | | |
-| Bloque máx en la misma sesión (`Sherpa: bloque …`) | | |
-| Desbordes | | |
+| Prueba | Motorola G22 |
+|---|---|
+| Tamaño del búfer | 200 ms (3200 muestras) |
+| `getTimestamp` | Anda: dio datos en todos los reportes |
+| Aperturas del micrófono (duración) | 192 s, 7,7 s, 255 s, 142 s |
+| Base del atraso en cada apertura | 111–114 / 78 / 70–74 / 75–78 ms |
+| Atraso máx | 147 ms (a los 5 s de abrir); después ≤ 137 ms |
+| Pendiente HW máx | 56 ms de 200 (a los 5 s de abrir); después ≤ 45 ms |
+| Bloque de sherpa, prom / máx | 20–23 / 68–125 ms |
+| Desbordes | **0** |
+
+- **No se pierde audio.** Dentro de cada apertura la base del atraso se mueve solo unos ±3 ms. En 255 s el audio leído no se separó del reloj.
+- Las bases son distintas entre aperturas porque cada una tiene su propia latencia de arranque.
+- **Por qué un bloque de 125 ms no desborda.** Cada lectura trae 100 ms de audio, así que un bloque de 125 ms deja unos 25 ms de atraso, que se recuperan en las lecturas siguientes. El pendiente máximo fue 56 ms, lejos de los 200 ms del búfer.
+- **Vosk E no se midió** (decisión del usuario). Con bloques de 161 ms se calcula un pendiente de unos 60 ms más el del arranque, igual muy por debajo de los 200 ms.
+- **Al margen de esta prueba:**
+  - Sherpa detectó `MORGANA` 2 veces (21:13:49 y 21:13:58). En la escalera con `:3.0` había dado 0/10. No se contaron los intentos fallidos.
+  - "Simular detección" quedó 1 sola vez en el log (21:18:15), aunque el usuario la tocó varias veces (ver Pendientes de `CLAUDE.md`).
+
+**Conclusión:** el criterio "máximo por bloque < 100 ms" pasa a ser **"sin pérdida de audio (0 desbordes y la base del atraso estable) y promedio < 50 ms"**. El log de `AudioDrift` queda junto al de `AudioLevel` y se decide con él al cerrar el 1.3.
 
 ## Herramientas del spike (desarrollo, no del build)
 
