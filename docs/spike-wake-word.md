@@ -261,6 +261,7 @@ Para "HEY HAILEY" se usan las 8 trampas de "Halley" (1.2b.3b).
 | Escalera E2 | sherpa MORGANA `:3.0 #0.25` | 0 / 10 | 0 durante los intentos | — |
 | D | Vosk, "morgana" + 10 distractoras, detección sobre el parcial | **10 / 10** | **7 / 40**, sin dobles | 26–29 / 79–138 ms |
 | E | Vosk, gramática de la D, detección sobre el final con confianza (umbral 0, calibración) | 9 / 10 | 6 / 40 con umbral 0 | 18–21 / 55–161 ms |
+| Escalera E3 | sherpa HEY HAILEY `:2.0 #0.15` | 0 / 10 | 0 durante los intentos | 28–31 / 110–141 ms |
 
 Criterios: aciertos ≥ 18 / 20, trampas ≤ 2 / 40, máximo por bloque < 100 ms en el Motorola.
 
@@ -337,6 +338,30 @@ Gramática `["morgana","morgan","mañana","gana","ganas","ganamos","amor","órga
 - Por bloque: prom 18–21 ms; máx 55–161 ms (supera 100 en 4 de 17 ventanas, con picos al calcular el final).
 
 **Conclusión parcial:** Vosk con distractoras baja las falsas de ~50 % a ~15–18 %, y la confianza por palabra no mejora eso. Queda lejos de ≤ 2 / 40. Sigue: el paso de los desbordes del AudioRecord y cerrar sherpa con HEY HAILEY bajando solo el umbral (0.15 y 0.10).
+
+### Escalera de umbral — sherpa, HEY HAILEY y MORGANA
+
+En sherpa solo se baja el umbral. HEY HAILEY usa refuerzo 2.0 y MORGANA 3.0. Los escalones alternan las claves: E3 HEY HAILEY #0.15 → E4 MORGANA #0.15 → E5 HEY HAILEY #0.10 → E6 MORGANA #0.10. El E5 no se hizo: HEY HAILEY quedó descartado después del E3 (ver más abajo).
+
+Cada escalón son 10 intentos a ~30 cm en el Motorola, marcados con `tools/ronda.sh … intentos`. Si una clave llega a ≥ 8/10 con 0.15, se saltea su escalón de 0.10 y se hacen sus trampas con 0.15.
+
+| Escalón | `keywords.txt` | Aciertos | Falsas / dobles | Nivel de la voz (máx por ventana de 5 s) | Por bloque, prom / máx |
+|---|---|---|---|---|---|
+| E3 (21:52:07–21:52:45) | `▁HE Y ▁HA IL E Y :2.0 #0.15 @HEY_HAILEY` | **0 / 10** | 0 / 0 | −39 a −45 dBFS | 28–31 / 110–141 ms |
+
+- **E3:**
+  - Ninguna detección, aunque la voz llegó con nivel normal: −39 a −45 dBFS, como en los escalones anteriores.
+  - El promedio por bloque sube a 28–31 ms (con 0.25 era 21–27). Sigue por debajo de 50.
+  - No hubo pérdida de audio: la base del atraso quedó fija en 81 ms y el pendiente máximo fue 110 de 200 ms, al arrancar.
+  - Bajar el umbral de 0.25 a 0.15 no movió los aciertos: 1/10 antes, 0/10 ahora.
+- **Control positivo (E3, configuración `:2.0 #0.15`):**
+  - El usuario reprodujo "hey Hailey" con la voz en inglés del Traductor de Google y sherpa detectó HEY HAILEY. El resultado lo informó el usuario; ese tramo no quedó en el log guardado.
+  - La integración funciona: `keywords.txt`, tokens, audio y detección.
+  - El modelo en inglés no reconoce como esos tokens la pronunciación natural del usuario, que es rioplatense.
+- **HEY HAILEY queda descartado** (decisión del usuario, 2026-11-27):
+  - Solo detecta pronunciado en inglés, y el usuario no le va a hablar en inglés a Halley.
+  - El E5 (HEY HAILEY #0.10) no se hace.
+  - Siguen E4 y E6 con MORGANA, que se pronuncia parecido en español y en inglés.
 
 ## Desbordes del AudioRecord (rama `spike/wake-word`)
 
