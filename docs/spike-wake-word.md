@@ -348,6 +348,7 @@ Cada escalón son 10 intentos a ~30 cm en el Motorola, marcados con `tools/ronda
 | Escalón | `keywords.txt` | Aciertos | Falsas / dobles | Nivel de la voz (máx por ventana de 5 s) | Por bloque, prom / máx |
 |---|---|---|---|---|---|
 | E3 (21:52:07–21:52:45) | `▁HE Y ▁HA IL E Y :2.0 #0.15 @HEY_HAILEY` | **0 / 10** | 0 / 0 | −39 a −45 dBFS | 28–31 / 110–141 ms |
+| E4 (22:13:14–22:14:06) | `▁MO R G AN A :3.0 #0.15 @MORGANA` | **0 / 10** | 0 / 0 | −37 a −44 dBFS | 27–30 / 106–164 ms |
 
 - **E3:**
   - Ninguna detección, aunque la voz llegó con nivel normal: −39 a −45 dBFS, como en los escalones anteriores.
@@ -362,6 +363,12 @@ Cada escalón son 10 intentos a ~30 cm en el Motorola, marcados con `tools/ronda
   - Solo detecta pronunciado en inglés, y el usuario no le va a hablar en inglés a Halley.
   - El E5 (HEY HAILEY #0.10) no se hace.
   - Siguen E4 y E6 con MORGANA, que se pronuncia parecido en español y en inglés.
+- **E4:**
+  - Fueron 5 "morgana", un toque de "Simular detección" (22:13:37) y otros 5 "morgana". Ninguna detección real.
+  - La voz llegó con nivel normal: −37 a −44 dBFS.
+  - Las 2 detecciones de MORGANA durante la prueba de desbordes (con `#0.25`) no se repitieron con un umbral más permisivo: parecen casuales.
+  - "Simular detección" respondió al primer toque, con el micrófono abierto y esperando la palabra clave. El toque cerró y reabrió el micrófono sin errores.
+  - No hubo pérdida de audio: la base del atraso quedó en 71–73 ms y el pendiente máximo fue 56 de 200 ms. El bloque máximo fue de 164 ms, el más alto medido con sherpa, y aun así no desbordó.
 
 ## Desbordes del AudioRecord (rama `spike/wake-word`)
 
